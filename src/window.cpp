@@ -12,10 +12,13 @@ X11Window::X11Window(int x, int y, int width, int height)
     height(height)
 {
     createWindowContext();
+    setFont("9x15bold");
 }
 
 X11Window::~X11Window() 
 {
+    XFreeFont(display, font);
+    XFreeGC(display, gc);
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 }
@@ -36,7 +39,7 @@ void X11Window::createWindowContext()
     XMatchVisualInfo(display, screen, 32, TrueColor, &visualInfo);
 
     attributes.colormap = XCreateColormap(display, rootWindow, visualInfo.visual, AllocNone);
-    attributes.background_pixel = WhitePixel(display, screen);
+    attributes.background_pixel = createColor(255,255,255,64).pixel;
     attributes.override_redirect = true;
 
     unsigned long attrMask = CWColormap|CWBorderPixel|CWBackPixel|CWEventMask|CWWinGravity|CWBitGravity|CWSaveUnder|CWDontPropagate|CWOverrideRedirect;
@@ -47,6 +50,43 @@ void X11Window::createWindowContext()
     XFixesDestroyRegion(display, region);
 
     XMapWindow(display, window);
+
+    gc = XCreateGC(display, window, 0, 0);
+}
+
+void X11Window::setFont(const std::string& fontname)
+{
+    if (font) {
+        XFreeFont(display, font);
+    }
+
+    font = XLoadQueryFont(display, fontname.c_str());
+    if (!font) {
+        std::cout << "loading X font... FAILED" << std::endl;
+        exit(1);
+    }
+    XSetFont(display, gc, font->fid);
+}
+
+XColor X11Window::createColor(
+    unsigned short red, 
+    unsigned short green, 
+    unsigned short blue, 
+    unsigned short alpha) 
+{
+    XColor color;
+    color.red = red * alpha;
+    color.green = green * alpha;
+    color.blue = blue * alpha;
+    color.flags = DoRed | DoGreen | DoBlue;
+
+    if (!XAllocColor(display, DefaultColormap(display, screen), &color)) {
+        std::cout << "creating X color... FAILED" << std::endl;
+        exit(1);
+    }
+
+    color.pixel |= alpha << 24;
+    return color;
 }
 
 void X11Window::clear() 
@@ -57,4 +97,16 @@ void X11Window::clear()
 void X11Window::flush() 
 {
     XFlush(display);
+}
+
+void X11Window::drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) 
+{
+    XSetForeground(display, gc, color.pixel);
+    XFillRectangle(display, window, gc, x, y, w, h);
+}
+
+void X11Window::drawString(int x, int y, const std::string& text, const XColor& color) 
+{
+    XSetForeground(display, gc, color.pixel);
+    XDrawString(display, window, gc, x, y + font->ascent, text.c_str(), text.length());
 }

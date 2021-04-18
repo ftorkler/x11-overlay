@@ -13,8 +13,13 @@ public:
     X11Window(int x, int y, int width, int height);
     ~X11Window();
 
+    XColor createColor(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha);
+    void setFont(const std::string& fontname);
+
     void clear();
     void flush();
+    void drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color);
+    void drawString(int x, int y, const std::string& text, const XColor& color);
 
 private:
 
@@ -28,6 +33,9 @@ private:
     Window window;
     Visual* visual;
     XSetWindowAttributes attributes;
+
+    GC gc;
+    XFontStruct* font;
     
 };
 
