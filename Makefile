@@ -15,6 +15,9 @@ LDLIBS   := -lX11 -lXext -lXfixes -lXrandr
 
 all: $(EXE)
 
+debug: CPPFLAGS += -DDEBUG -g
+debug: $(EXE)
+
 $(EXE): $(OBJ) | $(BIN_DIR)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
