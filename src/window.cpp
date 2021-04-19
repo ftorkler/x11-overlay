@@ -3,6 +3,7 @@
 #include <iostream>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xrandr.h>
 
 X11Window::X11Window(int x, int y, int width, int height) 
 : 
@@ -12,6 +13,7 @@ X11Window::X11Window(int x, int y, int width, int height)
     height(height)
 {
     createWindowContext();
+    setActiveMonitor(0);
     setFont("9x15bold");
 }
 
@@ -52,6 +54,17 @@ void X11Window::createWindowContext()
     XMapWindow(display, window);
 
     gc = XCreateGC(display, window, 0, 0);
+}
+
+void X11Window::setActiveMonitor(int monitorIndex)
+{
+    int monitorCount;
+    XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
+
+    int index = std::min(monitorIndex, monitorCount - 1);
+    XMoveWindow(display, window, monitors[index].x + x, monitors[index].y + y);
+
+    delete monitors;
 }
 
 void X11Window::setFont(const std::string& fontname)

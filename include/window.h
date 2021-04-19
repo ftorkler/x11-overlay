@@ -14,6 +14,7 @@ public:
     ~X11Window();
 
     XColor createColor(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha);
+    void setActiveMonitor(int monitorIndex);
     void setFont(const std::string& fontname);
 
     void clear();
