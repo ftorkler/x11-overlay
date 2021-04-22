@@ -17,10 +17,13 @@ public:
     void setActiveMonitor(int monitorIndex);
     void setFont(const std::string& fontname);
 
-    void clear();
-    void flush();
-    void drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color);
-    void drawString(int x, int y, const std::string& text, const XColor& color);
+    void clear() const;
+    void flush() const;
+    void drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) const;
+    void drawString(int x, int y, const std::string& text, const XColor& color) const;
+
+    int getStringWidth(const std::string& text) const;
+    int getStringHeight(const std::string& text) const;
 
 private:
 

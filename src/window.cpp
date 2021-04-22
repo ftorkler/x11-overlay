@@ -41,7 +41,7 @@ void X11Window::createWindowContext()
     XMatchVisualInfo(display, screen, 32, TrueColor, &visualInfo);
 
     attributes.colormap = XCreateColormap(display, rootWindow, visualInfo.visual, AllocNone);
-    attributes.background_pixel = createColor(255,255,255,64).pixel;
+    // attributes.background_pixel = createColor(255,255,255,64).pixel;
     attributes.override_redirect = true;
 
     unsigned long attrMask = CWColormap|CWBorderPixel|CWBackPixel|CWEventMask|CWWinGravity|CWBitGravity|CWSaveUnder|CWDontPropagate|CWOverrideRedirect;
@@ -102,24 +102,34 @@ XColor X11Window::createColor(
     return color;
 }
 
-void X11Window::clear() 
+void X11Window::clear() const
 {
     XClearWindow(display, window);
 }
 
-void X11Window::flush() 
+void X11Window::flush() const
 {
     XFlush(display);
 }
 
-void X11Window::drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) 
+void X11Window::drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) const
 {
     XSetForeground(display, gc, color.pixel);
     XFillRectangle(display, window, gc, x, y, w, h);
 }
 
-void X11Window::drawString(int x, int y, const std::string& text, const XColor& color) 
+void X11Window::drawString(int x, int y, const std::string& text, const XColor& color) const
 {
     XSetForeground(display, gc, color.pixel);
     XDrawString(display, window, gc, x, y + font->ascent, text.c_str(), text.length());
+}
+
+int X11Window::getStringWidth(const std::string& text) const
+{
+    return XTextWidth(font, text.c_str(), text.size()) - 1;
+}
+
+int X11Window::getStringHeight(const std::string& text) const
+{
+    return font->ascent + font->descent;
 }
