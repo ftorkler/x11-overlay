@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <thread>
 
-#include "window.h"
+#include "gui.h"
 
 
 #define LINE_LIMIT 100
@@ -42,43 +42,24 @@ int main(int argc, char *argv[])
 
     catchSigterm();
 
-    X11Window* window = new X11Window(100, 100, 480, 640);
-
-    XColor bgColor = window->createColor(0, 0, 0, 100);
-    XColor redColor = window->createColor(255, 0, 0, 200);
+    Gui* gui = new Gui();
 
     while (running)
     {
-        window->clear();
-
-        int y = 0;
         int i = 0;
-        int maxWidth = 0;
 
         std::ifstream filein(argv[1]);
         for (std::string line; std::getline(filein, line) && i < LINE_LIMIT; ++i) {
-            int w = window->getStringWidth(line);
-            int h = window->getStringHeight(line);
-
-            if (w > maxWidth) {
-                maxWidth = w;
-            }
-
-            if (line.size()) {
-                window->drawRect(0, y, w, h, bgColor);
-            }
-            window->drawString(0, y, line, redColor);
-
-            y += h + 1;
+            gui->drawMessage(line);
         }
 
-        window->resize(maxWidth, y);
-        window->flush();
+        gui->flush();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    delete window;
+
+    delete gui;
 
     return 0;
 }
