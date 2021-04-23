@@ -5,12 +5,14 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/Xrandr.h>
 
-X11Window::X11Window(int x, int y, int width, int height) 
+X11Window::X11Window(int x, int y, unsigned int width, unsigned int height) 
 : 
     x(x),
     y(y),
     width(width),
-    height(height)
+    height(height),
+    monitorOffsetX(0),
+    monitorOffsetY(0)
 {
     createWindowContext();
     setActiveMonitor(0);
@@ -61,10 +63,38 @@ void X11Window::setActiveMonitor(int monitorIndex)
     int monitorCount;
     XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
 
-    int index = std::min(monitorIndex, monitorCount - 1);
-    XMoveWindow(display, window, monitors[index].x + x, monitors[index].y + y);
+    // for (int i=0; i<monitorCount; ++i) {
+    //     std::cout << i << " -" 
+    //     << " primary: " << monitors[i].primary
+    //     << " x: " << monitors[i].x
+    //     << " y: " << monitors[i].y
+    //     << " width: " << monitors[i].width
+    //     << " height: " << monitors[i].height
+    //     << " mwidth: " << monitors[i].mwidth
+    //     << " mheight: " << monitors[i].mheight
+    //     << std::endl;       
+    // }
 
+    int index = std::min(monitorIndex, monitorCount - 1);
+    monitorOffsetX = monitors[index].x;
+    monitorOffsetY = monitors[index].y;
     delete monitors;
+
+    move(x, y);
+}
+
+void X11Window::move(int x, int y)
+{
+    this->x = x;
+    this->y = y;
+    XMoveWindow(display, window, monitorOffsetX + x, monitorOffsetY + y);
+}
+
+void X11Window::resize(unsigned int width, unsigned int height)
+{
+    this->width = width;
+    this->height = height;
+    XResizeWindow(display, window, width, height);
 }
 
 void X11Window::setFont(const std::string& fontname)

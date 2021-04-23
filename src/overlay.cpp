@@ -53,11 +53,16 @@ int main(int argc, char *argv[])
 
         int y = 0;
         int i = 0;
+        int maxWidth = 0;
 
         std::ifstream filein(argv[1]);
         for (std::string line; std::getline(filein, line) && i < LINE_LIMIT; ++i) {
             int w = window->getStringWidth(line);
             int h = window->getStringHeight(line);
+
+            if (w > maxWidth) {
+                maxWidth = w;
+            }
 
             if (line.size()) {
                 window->drawRect(0, y, w, h, bgColor);
@@ -67,6 +72,7 @@ int main(int argc, char *argv[])
             y += h + 1;
         }
 
+        window->resize(maxWidth, y);
         window->flush();
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
