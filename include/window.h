@@ -4,6 +4,7 @@
 #include <string>
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/extensions/Xrandr.h>
 
 class X11Window
 {
@@ -14,6 +15,9 @@ public:
     ~X11Window();
 
     void setActiveMonitor(int monitorIndex);
+    unsigned int getMonitorWidth() const;
+    unsigned int getMonitorHeight() const;
+
     void move(int x, int y);
     void resize(unsigned int width, unsigned int height);
 
@@ -34,7 +38,6 @@ private:
 
     int x, y;
     unsigned int width, height;
-    int monitorOffsetX, monitorOffsetY;
 
     int screen;
     Display* display;
@@ -42,6 +45,7 @@ private:
     Window window;
     Visual* visual;
     XSetWindowAttributes attributes;
+    XRRMonitorInfo monitor;
 
     GC gc;
     XFontStruct* font;
