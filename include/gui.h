@@ -22,9 +22,12 @@ private:
     X11Window* window;
 
     int messageY, messageMaxWidth;
+    bool mouseOver;
 
     XColor bgColor;
+    XColor bgDimColor;
     XColor redColor;
+    XColor redDimColor;
 
 };
 
