@@ -6,6 +6,13 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 
+struct XY {
+    int x, y;
+};
+
+typedef XY Position;
+typedef XY Dimesion;
+
 class X11Window
 {
 
@@ -22,6 +29,9 @@ public:
     void resize(unsigned int width, unsigned int height);
 
     XColor createColor(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha);
+    bool hasNextEvent();
+    const XEvent& nextEvent();
+    Position getMousePosition() const;
 
     void clear() const;
     void flush() const;
@@ -29,8 +39,7 @@ public:
     void drawString(int x, int y, const std::string& text, const XColor& color) const;
     void setFont(const std::string& fontname);
 
-    int getStringWidth(const std::string& text) const;
-    int getStringHeight(const std::string& text) const;
+    Dimesion getStringDimension(const std::string& text) const;
 
 private:
 
@@ -49,7 +58,7 @@ private:
 
     GC gc;
     XFontStruct* font;
-    
+    XEvent event;
 };
 
 #endif // OVERLAY_WINDOW_H

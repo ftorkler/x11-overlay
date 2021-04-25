@@ -1,5 +1,7 @@
 #include "gui.h"
 
+#include <iostream>
+
 #include "window.h"
 
 Gui::Gui()
@@ -30,17 +32,16 @@ void Gui::flush()
 
 void Gui::drawMessage(const std::string& message) 
 {
-    int w = window->getStringWidth(message);
-    int h = window->getStringHeight(message);
+    Dimesion dim = window->getStringDimension(message);
 
-    if (w > messageMaxWidth) {
-        messageMaxWidth = w;
+    if (dim.x > messageMaxWidth) {
+        messageMaxWidth = dim.x;
     }
 
     if (message.size()) {
-        window->drawRect(0, messageY, w, h, bgColor);
+        window->drawRect(0, messageY, dim.x, dim.y, bgColor);
     }
     window->drawString(0, messageY, message, redColor);
 
-    messageY += h + 1;
+    messageY += dim.y + 1;
 }

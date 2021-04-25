@@ -130,6 +130,31 @@ XColor X11Window::createColor(
     return color;
 }
 
+bool X11Window::hasNextEvent()
+{
+    return XPending(display);
+}
+
+const XEvent& X11Window::nextEvent()
+{
+    XNextEvent(display, &event);
+    return event;
+}
+
+Position X11Window::getMousePosition() const
+{
+    int rx,ry;
+    unsigned int modifs;
+    Window root, child;
+    Position pos;
+
+    if (!XQueryPointer(display, window, &root, &child, &rx, &ry, &pos.x, &pos.y, &modifs)) {
+        std::cout << "querying pointer... FAILED" << std::endl;
+        exit(1);
+    }
+    return pos;
+}
+
 void X11Window::clear() const
 {
     XClearWindow(display, window);
@@ -152,12 +177,10 @@ void X11Window::drawString(int x, int y, const std::string& text, const XColor& 
     XDrawString(display, window, gc, x, y + font->ascent, text.c_str(), text.length());
 }
 
-int X11Window::getStringWidth(const std::string& text) const
+Position X11Window::getStringDimension(const std::string& text) const
 {
-    return XTextWidth(font, text.c_str(), text.size()) - 1;
-}
-
-int X11Window::getStringHeight(const std::string& text) const
-{
-    return font->ascent + font->descent;
+    Position pos;
+    pos.x = XTextWidth(font, text.c_str(), text.size()) - 1;
+    pos.y = font->ascent + font->descent;
+    return pos;
 }
