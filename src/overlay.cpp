@@ -31,7 +31,7 @@ void catchSigterm()
 void checkArguments(int argc, char *argv[])
 {
     if (argc != 2) {
-        std::cout << "Usage: " <<  argv[0] << " [FILE]" << std::endl;
+        std::cout << "Usage: " <<  argv[0] << " <FILE>" << std::endl;
         exit(0);
     }
 }
