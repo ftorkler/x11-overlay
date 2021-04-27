@@ -1,20 +1,33 @@
+<h2 align="center">X11-Overlay</h3>
+<p align="center">
+<img src="https://img.shields.io/badge/C++-Solutions-blue.svg?logo=c%2B%2B"></img>
+</p>
 
-# X11-Overlay
 
 # Installation
 
 ## Dependencies
 
-debian/ubuntu:  
-```$> apt install libx11 libx11-dev libxfixes libxfixes-dev```
+debian/ubuntu:
 
-arc/manjaro:  
-```$> pacman -S libx11 libxfixes libxrandr```
+```bash
+$> apt install libx11-dev libxfixes-dev libxrandr-dev
+```
+
+arc/manjaro:
+
+```bash
+$> pacman -S libx11 libxfixes libxrandr
+```
 
 ## Compile
-```$> make```
 
+```bash
+$> make
+```
 
 # Usage
 
-```./bin/overlay [FILE]```
+```bash
+$> ./bin/overlay <FILE>
+```
