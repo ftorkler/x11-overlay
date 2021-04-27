@@ -1,0 +1,28 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'include/**'
+      - 'src/**'
+      - 'Makefile'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'include/**'
+      - 'src/**'
+      - 'Makefile'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: install dependencies
+        run: sudo apt-get install -y libx11-dev libxfixes-dev libxrandr-dev
+
+      - name: build
+        run: make
