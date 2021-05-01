@@ -9,11 +9,11 @@ Gui::Gui()
     orientation(NW),
     messageY(0), 
     messageMaxWidth(0),
+    mouseOver(false),
+    dirty(true),
     screenEdgeSpacing(0),
     lineSpacing(0),
-    mouseOverTolerance(0),
-    mouseOver(false),
-    dirty(true)
+    mouseOverTolerance(0)
 {
     window = new X11Window(0, 0, 480, 640);
 
@@ -134,50 +134,47 @@ bool Gui::isMouseOver() const
     return false;
 }
 
+int Gui::calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const
+{
+    switch (orientation) {
+        case NW:
+        case W:
+        case SW:
+        default:
+            return spacing;
+        case N:
+        case CENTER:
+        case S:
+            return outerWidth / 2 - innerWidth / 2;
+        case NE:
+        case E:
+        case SE:
+            return outerWidth - innerWidth - spacing;
+    }
+}
+
+int Gui::calcYforOrientation(unsigned int innerHeight, unsigned outerHeight, unsigned int spacing) const
+{
+    switch (orientation) {
+        case NW:
+        case N:
+        case NE:
+        default:
+            return spacing;
+        case W:
+        case CENTER:
+        case E:
+            return outerHeight / 2 - innerHeight / 2;
+        case SW:
+        case S:
+        case SE:
+            return outerHeight - innerHeight - spacing;
+    }
+}
+
 void Gui::updateWindowPosition() const
 {
-    int windowW = window->getWidth();
-    int windowH = window->getHeight();
-    int monitorW = window->getMonitorWidth();
-    int monitorH = window->getMonitorHeight();
-
-    int x, y;
-
-    switch (orientation) {
-        case NW:
-        case W:
-        case SW:
-            x = 0 + screenEdgeSpacing;
-            break;
-        case N:
-        case CENTER:
-        case S:
-            x = monitorW / 2 - windowW / 2;
-            break;
-        case NE:
-        case E:
-        case SE:
-            x = monitorW - windowW - screenEdgeSpacing;
-            break;
-    }
-
-    switch (orientation) {
-        case NW:
-        case N:
-        case NE:
-            y = 0 + screenEdgeSpacing;
-            break;
-        case W:
-        case CENTER:
-        case E:
-            y = monitorH / 2 - windowH / 2;
-            break;
-        case SW:
-        case S:
-        case SE:
-            y = monitorH - windowH - screenEdgeSpacing;
-            break;
-    }
-
-    window->move(x, y);
+    window->move(
+        calcXforOrientation(window->getWidth(), window->getMonitorWidth(), screenEdgeSpacing),
+        calcYforOrientation(window->getHeight(), window->getMonitorHeight(), screenEdgeSpacing));
 }

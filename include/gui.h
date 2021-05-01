@@ -41,6 +41,8 @@ private:
     };
 
     bool isMouseOver() const;
+    int calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const;
+    int calcYforOrientation(unsigned int innerHeight, unsigned int outerHeight, unsigned int spacing) const;
     void updateWindowPosition() const;
 
     X11Window* window;
