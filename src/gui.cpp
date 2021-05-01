@@ -10,6 +10,7 @@ Gui::Gui()
     messageY(0), 
     messageMaxWidth(0),
     screenEdgeSpacing(0),
+    lineSpacing(0),
     mouseOverTolerance(0),
     mouseOver(false),
     dirty(true)
@@ -43,6 +44,12 @@ void Gui::setScreenEdgeSpacing(unsigned int spacing)
 {
     dirty = true;
     screenEdgeSpacing = spacing;
+}
+
+void Gui::setLineSpacing(unsigned int spacing)
+{
+    dirty = true;
+    lineSpacing = spacing;
 }
 
 void Gui::flush()
@@ -97,7 +104,7 @@ void Gui::addMessage(const std::string& message)
     if (dim.x > messageMaxWidth) {
         messageMaxWidth = dim.x;
     }
-    messageY += dim.y + 1;
+    messageY += dim.y + lineSpacing;
 }
 
 bool Gui::isMouseOver() const
@@ -130,7 +137,7 @@ bool Gui::isMouseOver() const
 void Gui::updateWindowPosition() const
 {
     int windowW = window->getWidth();
-    int windowH = window->getWidth();
+    int windowH = window->getHeight();
     int monitorW = window->getMonitorWidth();
     int monitorH = window->getMonitorHeight();
 

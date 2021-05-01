@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     gui->setMouseOverTolerance(25);
     gui->setOrientation(Gui::Orientation::NW);
     gui->setScreenEdgeSpacing(10);
+    gui->setLineSpacing(1);
 
     while (running)
     {

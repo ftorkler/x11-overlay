@@ -22,6 +22,7 @@ public:
     void setMouseOverTolerance(unsigned int tolerance);
     void setOrientation(Orientation orientation);
     void setScreenEdgeSpacing(unsigned int spacing);
+    void setLineSpacing(unsigned int spacing);
 
     void flush();
     void clearMessages();
@@ -43,14 +44,14 @@ private:
     void updateWindowPosition() const;
 
     X11Window* window;
-
     std::vector<Line> lines;
     int messageY, messageMaxWidth;
-    unsigned int screenEdgeSpacing;
-    unsigned int mouseOverTolerance;
     bool mouseOver;
     bool dirty;
 
+    unsigned int screenEdgeSpacing;
+    unsigned int lineSpacing;
+    unsigned int mouseOverTolerance;
     XColor bgColor;
     XColor bgDimColor;
     XColor redColor;
