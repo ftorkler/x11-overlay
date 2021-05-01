@@ -71,6 +71,16 @@ void X11Window::setActiveMonitor(int monitorIndex)
     move(x, y);
 }
 
+unsigned int X11Window::getWidth() const
+{
+    return width;
+}
+
+unsigned int X11Window::getHeight() const
+{
+    return height;
+}
+
 unsigned int X11Window::getMonitorWidth() const
 {
     return monitor.width;

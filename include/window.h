@@ -24,6 +24,8 @@ public:
     void setActiveMonitor(int monitorIndex);
     unsigned int getMonitorWidth() const;
     unsigned int getMonitorHeight() const;
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
 
     void move(int x, int y);
     void resize(unsigned int width, unsigned int height);

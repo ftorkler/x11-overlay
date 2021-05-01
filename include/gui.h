@@ -12,10 +12,15 @@ class Gui
 
 public:
 
+    enum Orientation {
+        N, NE, E, SE, S, SW, W, NW, CENTER
+    } orientation;
+
     Gui();
     ~Gui();
 
     void setMouseOverTolerance(unsigned int tolerance);
+    void setOrientation(Orientation orientation);
 
     void flush();
     void clearMessages();
@@ -34,6 +39,7 @@ private:
     };
 
     bool isMouseOver() const;
+    void updateWindowPosition() const;
 
     X11Window* window;
 

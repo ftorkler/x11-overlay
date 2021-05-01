@@ -6,13 +6,14 @@
 
 Gui::Gui()
 :
+    orientation(NW),
     messageY(0), 
     messageMaxWidth(0),
     mouseOverTolerance(0),
     mouseOver(false),
     dirty(true)
 {
-    window = new X11Window(100, 100, 480, 640);
+    window = new X11Window(0, 0, 480, 640);
 
     bgColor = window->createColor(0, 0, 0, 100);
     bgDimColor = window->createColor(0, 0, 0, 25);
@@ -27,7 +28,14 @@ Gui::~Gui()
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
 {
+    dirty = true;
     mouseOverTolerance = tolerance;
+}
+
+void Gui::setOrientation(Orientation orientation) 
+{
+    dirty = true;
+    this->orientation = orientation;
 }
 
 void Gui::flush()
@@ -45,6 +53,7 @@ void Gui::flush()
 
     if (w >0 && h > 0) {
         window->resize(w, h);   
+        updateWindowPosition();
 
         for (auto line : lines) {
             if (line.message.size()) {
@@ -108,4 +117,52 @@ bool Gui::isMouseOver() const
         }
     }
     return false;
+}
+
+void Gui::updateWindowPosition() const
+{
+    int windowW = window->getWidth();
+    int windowH = window->getWidth();
+    int monitorW = window->getMonitorWidth();
+    int monitorH = window->getMonitorHeight();
+
+    int x, y;
+
+    switch (orientation) {
+        case NW:
+        case W:
+        case SW:
+            x = 0;
+            break;
+        case N:
+        case CENTER:
+        case S:
+            x = monitorW / 2 - windowW / 2;
+            break;
+        case NE:
+        case E:
+        case SE:
+            x = monitorW - windowW;
+            break;
+    }
+
+    switch (orientation) {
+        case NW:
+        case N:
+        case NE:
+            y = 0;
+            break;
+        case W:
+        case CENTER:
+        case E:
+            y = monitorH / 2 - windowH / 2;
+            break;
+        case SW:
+        case S:
+        case SE:
+            y = monitorH - windowH;
+            break;
+    }
+
+    window->move(x, y);
 }
