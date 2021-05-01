@@ -21,6 +21,7 @@ public:
 
     void setMouseOverTolerance(unsigned int tolerance);
     void setOrientation(Orientation orientation);
+    void setScreenEdgeSpacing(unsigned int spacing);
 
     void flush();
     void clearMessages();
@@ -45,6 +46,7 @@ private:
 
     std::vector<Line> lines;
     int messageY, messageMaxWidth;
+    unsigned int screenEdgeSpacing;
     unsigned int mouseOverTolerance;
     bool mouseOver;
     bool dirty;

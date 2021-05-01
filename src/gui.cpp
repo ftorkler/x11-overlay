@@ -9,6 +9,7 @@ Gui::Gui()
     orientation(NW),
     messageY(0), 
     messageMaxWidth(0),
+    screenEdgeSpacing(0),
     mouseOverTolerance(0),
     mouseOver(false),
     dirty(true)
@@ -36,6 +37,12 @@ void Gui::setOrientation(Orientation orientation)
 {
     dirty = true;
     this->orientation = orientation;
+}
+
+void Gui::setScreenEdgeSpacing(unsigned int spacing)
+{
+    dirty = true;
+    screenEdgeSpacing = spacing;
 }
 
 void Gui::flush()
@@ -69,7 +76,8 @@ void Gui::flush()
     dirty = false;
 }
 
-void Gui::clearMessages() {
+void Gui::clearMessages() 
+{
     dirty = true;
 
     messageMaxWidth = 0;
@@ -132,7 +140,7 @@ void Gui::updateWindowPosition() const
         case NW:
         case W:
         case SW:
-            x = 0;
+            x = 0 + screenEdgeSpacing;
             break;
         case N:
         case CENTER:
@@ -142,7 +150,7 @@ void Gui::updateWindowPosition() const
         case NE:
         case E:
         case SE:
-            x = monitorW - windowW;
+            x = monitorW - windowW - screenEdgeSpacing;
             break;
     }
 
@@ -150,7 +158,7 @@ void Gui::updateWindowPosition() const
         case NW:
         case N:
         case NE:
-            y = 0;
+            y = 0 + screenEdgeSpacing;
             break;
         case W:
         case CENTER:
@@ -160,7 +168,7 @@ void Gui::updateWindowPosition() const
         case SW:
         case S:
         case SE:
-            y = monitorH - windowH;
+            y = monitorH - windowH - screenEdgeSpacing;
             break;
     }
 
