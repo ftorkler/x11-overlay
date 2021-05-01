@@ -3,6 +3,7 @@
 
 #include <string>
 #include <X11/Xlib.h>
+#include <vector>
 
 class X11Window;
 
@@ -15,14 +16,27 @@ public:
     ~Gui();
 
     void flush();
-    void drawMessage(const std::string& message);
+    void clearMessages();
+    void addMessage(const std::string& message);
 
 private:
 
+    struct Line {
+        
+        const int x, y;
+        const unsigned int w, h;
+        const std::string message;
+
+        Line(int x, int y, unsigned int w, unsigned  int h, const std::string& message) 
+            : x(x), y(y), w(w), h(h), message(message) { };
+    };
+
     X11Window* window;
 
+    std::vector<Line> lines;
     int messageY, messageMaxWidth;
     bool mouseOver;
+    bool dirty;
 
     XColor bgColor;
     XColor bgDimColor;

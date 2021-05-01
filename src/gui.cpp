@@ -8,7 +8,8 @@ Gui::Gui()
 :
     messageY(0), 
     messageMaxWidth(0),
-    mouseOver(false)
+    mouseOver(false),
+    dirty(true)
 {
     window = new X11Window(100, 100, 480, 640);
 
@@ -29,28 +30,50 @@ void Gui::flush()
     int h = messageY;
 
     Position pos = window->getMousePosition();
-    mouseOver = pos.x >= 0 && pos.y >= 0 && pos.x < w && pos.y < h;
+    bool isMouseOver = pos.x >= 0 && pos.y >= 0 && pos.x < w && pos.y < h;
+    dirty |= mouseOver == isMouseOver;
+    mouseOver = isMouseOver;
 
-    window->resize(w, h);
+    if (!dirty) {
+        return;
+    }
+
+    if (w >0 && h > 0) {
+        window->resize(w, h);   
+
+        for (auto line : lines) {
+            if (line.message.size()) {
+                window->drawRect(line.x, line.y, line.w, line.h, mouseOver ? bgDimColor : bgColor);
+                window->drawString(line.x, line.y, line.message, mouseOver ? redDimColor : redColor);        
+            }
+        }
+    }
+
     window->flush();
     window->clear();
 
-    messageMaxWidth = 0;
-    messageY = 0;
+    dirty = false;
 }
 
-void Gui::drawMessage(const std::string& message) 
+void Gui::clearMessages() {
+    dirty = true;
+
+    messageMaxWidth = 0;
+    messageY = 0;
+
+    lines.clear();
+}
+
+void Gui::addMessage(const std::string& message) 
 {
+    dirty = true;
+
     Dimesion dim = window->getStringDimension(message);
+
+    lines.emplace_back(Line(0, messageY, dim.x, dim.y, message));
 
     if (dim.x > messageMaxWidth) {
         messageMaxWidth = dim.x;
     }
-
-    if (message.size()) {
-        window->drawRect(0, messageY, dim.x, dim.y, mouseOver ? bgDimColor : bgColor);
-    }
-    window->drawString(0, messageY, message, mouseOver ? redDimColor : redColor);
-
     messageY += dim.y + 1;
 }
