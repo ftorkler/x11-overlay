@@ -1,5 +1,6 @@
 #include "gui.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "window.h"
@@ -11,6 +12,7 @@ Gui::Gui()
     messageMaxWidth(0),
     mouseOver(false),
     dirty(true),
+    dirtyLines(true),
     screenEdgeSpacing(0),
     lineSpacing(0),
     mouseOverTolerance(0)
@@ -37,6 +39,7 @@ void Gui::setMouseOverTolerance(unsigned int tolerance)
 void Gui::setOrientation(Orientation orientation) 
 {
     dirty = true;
+    dirtyLines = true;
     this->orientation = orientation;
 }
 
@@ -57,6 +60,14 @@ void Gui::flush()
     int w = messageMaxWidth;
     int h = messageY;
 
+    if (dirtyLines) {
+        dirtyLines = false;
+
+        for (auto& line : lines) {
+            line.x = calcXforOrientation(line.w, messageMaxWidth, 0);
+        }
+    }
+
     bool currentMouseOver = isMouseOver();
     dirty |= mouseOver == currentMouseOver;
     mouseOver = currentMouseOver;
@@ -72,7 +83,7 @@ void Gui::flush()
         for (auto line : lines) {
             if (line.message.size()) {
                 window->drawRect(line.x, line.y, line.w, line.h, mouseOver ? bgDimColor : bgColor);
-                window->drawString(line.x, line.y, line.message, mouseOver ? redDimColor : redColor);        
+                window->drawString(line.x, line.y, line.message, mouseOver ? redDimColor : redColor);
             }
         }
     }
@@ -86,6 +97,7 @@ void Gui::flush()
 void Gui::clearMessages() 
 {
     dirty = true;
+    dirtyLines = true;
 
     messageMaxWidth = 0;
     messageY = 0;
@@ -93,18 +105,38 @@ void Gui::clearMessages()
     lines.clear();
 }
 
+
 void Gui::addMessage(const std::string& message) 
 {
     dirty = true;
+    dirtyLines = true;
 
-    Dimesion dim = window->getStringDimension(message);
+    std::string trimmedMessage = trimForOrientation(message);
 
-    lines.emplace_back(Line(0, messageY, dim.x, dim.y, message));
+    Dimesion dim = window->getStringDimension(trimmedMessage);
+
+    lines.emplace_back(Line(0, messageY, dim.x, dim.y, trimmedMessage));
 
     if (dim.x > messageMaxWidth) {
         messageMaxWidth = dim.x;
     }
     messageY += dim.y + lineSpacing;
+}
+
+std::string Gui::trimForOrientation(const std::string& text) const
+{
+    if (orientation != NW && orientation != W && orientation != SW) {
+        size_t start = text.find_first_not_of(" ");
+        std::string mutableText = (start == std::string::npos) ? "" : text.substr(start);
+
+        if (orientation == NE || orientation == E || orientation == SE) {
+            for (int i=0; i<(int)start; ++i) {
+                mutableText.append(" ");
+            }
+        }
+        return mutableText;
+    }
+    return text;
 }
 
 bool Gui::isMouseOver() const
