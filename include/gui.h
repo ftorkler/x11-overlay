@@ -15,6 +15,8 @@ public:
     Gui();
     ~Gui();
 
+    void setMouseOverTolerance(unsigned int tolerance);
+
     void flush();
     void clearMessages();
     void addMessage(const std::string& message);
@@ -31,10 +33,13 @@ private:
             : x(x), y(y), w(w), h(h), message(message) { };
     };
 
+    bool isMouseOver() const;
+
     X11Window* window;
 
     std::vector<Line> lines;
     int messageY, messageMaxWidth;
+    unsigned int mouseOverTolerance;
     bool mouseOver;
     bool dirty;
 

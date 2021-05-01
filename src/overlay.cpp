@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
     catchSigterm();
 
     gui = new Gui();
+    gui->setMouseOverTolerance(25);
 
     while (running)
     {

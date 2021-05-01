@@ -8,6 +8,7 @@ Gui::Gui()
 :
     messageY(0), 
     messageMaxWidth(0),
+    mouseOverTolerance(0),
     mouseOver(false),
     dirty(true)
 {
@@ -24,15 +25,19 @@ Gui::~Gui()
     delete window;
 }
 
+void Gui::setMouseOverTolerance(unsigned int tolerance)
+{
+    mouseOverTolerance = tolerance;
+}
+
 void Gui::flush()
 {
     int w = messageMaxWidth;
     int h = messageY;
 
-    Position pos = window->getMousePosition();
-    bool isMouseOver = pos.x >= 0 && pos.y >= 0 && pos.x < w && pos.y < h;
-    dirty |= mouseOver == isMouseOver;
-    mouseOver = isMouseOver;
+    bool currentMouseOver = isMouseOver();
+    dirty |= mouseOver == currentMouseOver;
+    mouseOver = currentMouseOver;
 
     if (!dirty) {
         return;
@@ -76,4 +81,31 @@ void Gui::addMessage(const std::string& message)
         messageMaxWidth = dim.x;
     }
     messageY += dim.y + 1;
+}
+
+bool Gui::isMouseOver() const
+{
+    int w = messageMaxWidth;
+    int h = messageY;
+    int t = mouseOverTolerance;
+
+    Position pos = window->getMousePosition();
+    bool isInFrame = 
+        pos.x + t >= 0 && 
+        pos.y + t >= 0 && 
+        pos.x - t < w && 
+        pos.y - t < h;
+        
+    if (isInFrame) {
+        for (auto line : lines) {
+            if (pos.x + t >= line.x && 
+                pos.y + t >= line.y && 
+                pos.x - t <= line.x + (int)line.w && 
+                pos.y - t <= line.y + (int)line.h) 
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
