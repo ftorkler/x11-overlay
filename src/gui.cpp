@@ -15,19 +15,48 @@ Gui::Gui()
     dirtyLines(true),
     screenEdgeSpacing(0),
     lineSpacing(0),
-    mouseOverTolerance(0)
+    mouseOverTolerance(0),
+    dimming(0.75)
 {
     window = new X11Window(0, 0, 480, 640);
 
-    bgColor = window->createColor(0, 0, 0, 100);
-    bgDimColor = window->createColor(0, 0, 0, 25);
-    redColor = window->createColor(255, 0, 0, 200);
-    redDimColor = window->createColor(255, 0, 0, 50);
+    setDefaultBackgroundColor(0, 0, 0, 100);
+    setDefaultForgroundColor(255, 0, 0, 200);
 }
 
 Gui::~Gui()
 {
     delete window;
+}
+
+void Gui::setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    dirty = true;
+    fgColor.r = r;
+    fgColor.g = g;
+    fgColor.b = b;
+    fgColor.a = a;
+    fgColor.xcolor = window->createColor(r, g, b, a);
+    setMouseOverDimming(dimming);
+}
+
+void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    dirty = true;
+    bgColor.r = r;
+    bgColor.g = g;
+    bgColor.b = b;
+    bgColor.a = a;
+    bgColor.xcolor = window->createColor(r, g, b, a);
+    setMouseOverDimming(dimming);
+}
+
+void Gui::setMouseOverDimming(const float& dimming)
+{
+    dirty = true;
+    this->dimming = dimming;
+    fgColor.xcolorDim = window->createColor(fgColor.r, fgColor.g, fgColor.b, (unsigned char)(fgColor.a * (1.0 - dimming)));
+    bgColor.xcolorDim = window->createColor(bgColor.r, bgColor.g, bgColor.b, (unsigned char)(bgColor.a * (1.0 - dimming)));
 }
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
@@ -76,20 +105,21 @@ void Gui::flush()
         return;
     }
 
+    window->clear();
+
     if (w >0 && h > 0) {
         window->resize(w, h);   
         updateWindowPosition();
 
         for (auto line : lines) {
             if (line.message.size()) {
-                window->drawRect(line.x, line.y, line.w, line.h, mouseOver ? bgDimColor : bgColor);
-                window->drawString(line.x, line.y, line.message, mouseOver ? redDimColor : redColor);
+                window->drawRect(line.x, line.y, line.w, line.h, mouseOver ? bgColor.xcolorDim : bgColor.xcolor);
+                window->drawString(line.x, line.y, line.message, mouseOver ? fgColor.xcolorDim : fgColor.xcolor);
             }
         }
     }
 
     window->flush();
-    window->clear();
 
     dirty = false;
 }

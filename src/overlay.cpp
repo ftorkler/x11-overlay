@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
     gui->setOrientation(Gui::Orientation::NW);
     gui->setScreenEdgeSpacing(10);
     gui->setLineSpacing(1);
+    gui->setDefaultForgroundColor(0, 255, 255, 200);
+    gui->setMouseOverDimming(0.9);
 
     while (running)
     {

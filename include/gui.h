@@ -19,6 +19,9 @@ public:
     Gui();
     ~Gui();
 
+    void setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void setMouseOverDimming(const float& dimming);
     void setMouseOverTolerance(unsigned int tolerance);
     void setOrientation(Orientation orientation);
     void setScreenEdgeSpacing(unsigned int spacing);
@@ -40,6 +43,11 @@ private:
             : x(x), y(y), w(w), h(h), message(message) { };
     };
 
+    struct Color {
+        unsigned char r, g, b, a;
+        XColor xcolor, xcolorDim;
+    };
+
     std::string trimForOrientation(const std::string& text) const;
     bool isMouseOver() const;
     int calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const;
@@ -55,10 +63,9 @@ private:
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;
     unsigned int mouseOverTolerance;
-    XColor bgColor;
-    XColor bgDimColor;
-    XColor redColor;
-    XColor redDimColor;
+    float dimming;
+    Color fgColor;
+    Color bgColor;
 
 };
 
