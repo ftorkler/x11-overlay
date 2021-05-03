@@ -240,3 +240,30 @@ void Gui::updateWindowPosition() const
         calcXforOrientation(window->getWidth(), window->getMonitorWidth(), screenEdgeSpacing),
         calcYforOrientation(window->getHeight(), window->getMonitorHeight(), screenEdgeSpacing));
 }
+
+std::string Gui::orientationToString(Orientation orientation)
+{
+    switch (orientation)
+    {
+        case N: return "N";
+        case NE: return "NE";
+        case E: return "E";
+        case SE: return "SE";
+        case S: return "S";
+        case SW: return "SW";
+        case W: return "W";
+        case NW: return "NW";
+        case CENTER: return "CENTER";
+        default: return "";
+    }
+}
+
+Gui::Orientation Gui::orientationFromString(const std::string& input)
+{
+    for (int orientation=N; orientation<NONE; ++orientation) {
+        if (input == orientationToString(static_cast<Orientation>(orientation))) {
+            return static_cast<Orientation>(orientation);
+        }
+    }
+    return Orientation::NONE;
+}

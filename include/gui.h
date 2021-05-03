@@ -13,7 +13,7 @@ class Gui
 public:
 
     enum Orientation {
-        N, NE, E, SE, S, SW, W, NW, CENTER
+        N, NE, E, SE, S, SW, W, NW, CENTER, NONE
     } orientation;
 
     Gui();
@@ -30,6 +30,9 @@ public:
     void flush();
     void clearMessages();
     void addMessage(const std::string& message);
+
+    static std::string orientationToString(Orientation orientation);
+    static Orientation orientationFromString(const std::string& input);
 
 private:
 

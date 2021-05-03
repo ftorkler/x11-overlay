@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <thread>
 
+#include "config.h"
 #include "gui.h"
 
 
@@ -43,14 +44,6 @@ void catchSigterm()
    sigaction(SIGINT, &sigIntHandler, nullptr);
 }
 
-void checkArguments(int argc, char *argv[])
-{
-    if (argc != 2) {
-        std::cout << "Usage: " <<  argv[0] << " <FILE>" << std::endl;
-        exit(0);
-    }
-}
-
 void checkInputFile(const std::string& filename)
 {
     gui->clearMessages();      
@@ -65,23 +58,22 @@ void checkInputFile(const std::string& filename)
 
 int main(int argc, char *argv[])
 {
-    checkArguments(argc, argv);
+    Config config = Config::defaultConfig().overrideWith(Config::fromParameters(argc, argv));
 
     catchSigterm();
 
     gui = new Gui();
-    gui->setMouseOverTolerance(25);
-    gui->setOrientation(Gui::Orientation::NW);
-    gui->setScreenEdgeSpacing(10);
-    gui->setLineSpacing(1);
-    gui->setDefaultForgroundColor(0, 255, 255, 200);
-    gui->setMouseOverDimming(0.9);
+    gui->setOrientation(config.orientation);
+    gui->setMouseOverDimming(config.dimming / 100.0f);
+    gui->setMouseOverTolerance(config.mouseOverTolerance);
+    gui->setScreenEdgeSpacing(config.screenEdgeSpacing);
+    gui->setLineSpacing(config.lineSpacing);
 
     while (running)
     {
         unsigned long now = clockMillis();
         if (now - lastRead >= CHECK_FILE_INTERVAL_MS) {
-            checkInputFile(argv[1]);
+            checkInputFile(config.inputFile);
             lastRead = now;
         }
 

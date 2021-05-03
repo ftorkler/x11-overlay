@@ -93,11 +93,9 @@ unsigned int X11Window::getMonitorHeight() const
 
 void X11Window::move(int x, int y)
 {
-    if (this->x != x || this->y != y) {
-        this->x = x;
-        this->y = y;
-        XMoveWindow(display, window, monitor.x + x, monitor.y + y);
-    }
+    this->x = x;
+    this->y = y;
+    XMoveWindow(display, window, monitor.x + x, monitor.y + y);
 }
 
 void X11Window::resize(unsigned int width, unsigned int height)
