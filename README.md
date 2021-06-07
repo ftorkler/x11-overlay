@@ -12,13 +12,12 @@
 debian/ubuntu:
 
 ```
-$> apt install libx11-dev libxfixes-dev libxrandr-dev libXft-dev freetype2-dev
-```
+$> apt install libx11-dev libxfixes-dev libxrandr-dev libxft-dev libfreetype-dev
 
 arc/manjaro:
 
 ```
-$> pacman -S libx11 libxfixes libxrandr libXft freetype2
+$> pacman -S libx11 libxfixes libxrandr libxft freetype2
 ```
 
 ## Compile
