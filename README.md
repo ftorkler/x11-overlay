@@ -13,6 +13,7 @@ debian/ubuntu:
 
 ```
 $> apt install libx11-dev libxfixes-dev libxrandr-dev libxft-dev libfreetype-dev
+```
 
 arc/manjaro:
 
