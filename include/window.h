@@ -1,17 +1,13 @@
 #ifndef OVERLAY_WINDOW_H
 #define OVERLAY_WINDOW_H
 
-#include <string>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 
-struct XY {
-    int x, y;
-};
+#include "pair.h"
 
-typedef XY Position;
-typedef XY Dimesion;
+class X11Canvas;
 
 class X11Window
 {
@@ -30,18 +26,13 @@ public:
     void move(int x, int y);
     void resize(unsigned int width, unsigned int height);
 
-    XColor createColor(unsigned short red, unsigned short green, unsigned short blue, unsigned short alpha);
+    X11Canvas* createCanvas() const;
     bool hasNextEvent();
     const XEvent& nextEvent();
     Position getMousePosition() const;
 
     void clear() const;
     void flush() const;
-    void drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) const;
-    void drawString(int x, int y, const std::string& text, const XColor& color) const;
-    void setFont(const std::string& fontname);
-
-    Dimesion getStringDimension(const std::string& text) const;
 
 private:
 
@@ -54,12 +45,10 @@ private:
     Display* display;
     Window rootWindow;
     Window window;
-    Visual* visual;
+    XVisualInfo visualInfo;
     XSetWindowAttributes attributes;
     XRRMonitorInfo monitor;
 
-    GC gc;
-    XFontStruct* font;
     XEvent event;
 };
 

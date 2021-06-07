@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "canvas.h"
 #include "window.h"
 
 Gui::Gui()
@@ -19,6 +20,7 @@ Gui::Gui()
     dimming(0.75)
 {
     window = new X11Window(0, 0, 480, 640);
+    canvas = window->createCanvas();
 
     setDefaultBackgroundColor(0, 0, 0, 100);
     setDefaultForgroundColor(255, 0, 0, 200);
@@ -26,28 +28,21 @@ Gui::Gui()
 
 Gui::~Gui()
 {
+    delete canvas;
     delete window;
 }
 
 void Gui::setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     dirty = true;
-    fgColor.r = r;
-    fgColor.g = g;
-    fgColor.b = b;
-    fgColor.a = a;
-    fgColor.xcolor = window->createColor(r, g, b, a);
+    fgColor = Color(r, g, b, a);
     setMouseOverDimming(dimming);
 }
 
 void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     dirty = true;
-    bgColor.r = r;
-    bgColor.g = g;
-    bgColor.b = b;
-    bgColor.a = a;
-    bgColor.xcolor = window->createColor(r, g, b, a);
+    bgColor = Color(r, g, b, a);
     setMouseOverDimming(dimming);
 }
 
@@ -55,8 +50,8 @@ void Gui::setMouseOverDimming(const float& dimming)
 {
     dirty = true;
     this->dimming = dimming;
-    fgColor.xcolorDim = window->createColor(fgColor.r, fgColor.g, fgColor.b, (unsigned char)(fgColor.a * (1.0 - dimming)));
-    bgColor.xcolorDim = window->createColor(bgColor.r, bgColor.g, bgColor.b, (unsigned char)(bgColor.a * (1.0 - dimming)));
+    fgColorDim = Color(fgColor.r, fgColor.g, fgColor.b, (unsigned char)(fgColor.a * (1.0 - dimming)));
+    bgColorDim = Color(bgColor.r, bgColor.g, bgColor.b, (unsigned char)(bgColor.a * (1.0 - dimming)));
 }
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
@@ -111,10 +106,16 @@ void Gui::flush()
         window->resize(w, h);   
         updateWindowPosition();
 
+        canvas->setColor(mouseOver ? bgColorDim : bgColor);
         for (auto line : lines) {
             if (line.message.size()) {
-                window->drawRect(line.x, line.y, line.w, line.h, mouseOver ? bgColor.xcolorDim : bgColor.xcolor);
-                window->drawString(line.x, line.y, line.message, mouseOver ? fgColor.xcolorDim : fgColor.xcolor);
+                canvas->drawRect(line.x, line.y, line.w, line.h);
+            }
+        }
+        canvas->setColor(mouseOver ? fgColorDim : fgColor);
+        for (auto line : lines) {
+            if (line.message.size()) {
+                canvas->drawString(line.x, line.y, line.message);
             }
         }
     }
@@ -143,14 +144,14 @@ void Gui::addMessage(const std::string& message)
 
     std::string trimmedMessage = trimForOrientation(message);
 
-    Dimesion dim = window->getStringDimension(trimmedMessage);
+    Dimesion dim = canvas->getStringDimension(trimmedMessage);
 
-    lines.emplace_back(Line(0, messageY, dim.x, dim.y, trimmedMessage));
+    lines.emplace_back(Line(0, messageY, dim.w, dim.h, trimmedMessage));
 
     if (dim.x > messageMaxWidth) {
-        messageMaxWidth = dim.x;
+        messageMaxWidth = dim.w;
     }
-    messageY += dim.y + lineSpacing;
+    messageY += dim.h + lineSpacing;
 }
 
 std::string Gui::trimForOrientation(const std::string& text) const

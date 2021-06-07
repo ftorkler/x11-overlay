@@ -5,6 +5,9 @@
 #include <X11/Xlib.h>
 #include <vector>
 
+#include "color.h"
+
+class X11Canvas;
 class X11Window;
 
 class Gui
@@ -46,11 +49,6 @@ private:
             : x(x), y(y), w(w), h(h), message(message) { };
     };
 
-    struct Color {
-        unsigned char r, g, b, a;
-        XColor xcolor, xcolorDim;
-    };
-
     std::string trimForOrientation(const std::string& text) const;
     bool isMouseOver() const;
     int calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const;
@@ -58,6 +56,7 @@ private:
     void updateWindowPosition() const;
 
     X11Window* window;
+    X11Canvas* canvas;
     std::vector<Line> lines;
     int messageY, messageMaxWidth;
     bool mouseOver;
@@ -68,7 +67,9 @@ private:
     unsigned int mouseOverTolerance;
     float dimming;
     Color fgColor;
+    Color fgColorDim;
     Color bgColor;
+    Color bgColorDim;
 
 };
 

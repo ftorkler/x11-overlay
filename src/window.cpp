@@ -4,6 +4,8 @@
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xfixes.h>
 
+#include "canvas.h"
+
 X11Window::X11Window(int x, int y, unsigned int width, unsigned int height) 
 : 
     x(x),
@@ -14,13 +16,10 @@ X11Window::X11Window(int x, int y, unsigned int width, unsigned int height)
 {
     createWindowContext();
     setActiveMonitor(0);
-    setFont("9x15bold");
 }
 
 X11Window::~X11Window() 
 {
-    XFreeFont(display, font);
-    XFreeGC(display, gc);
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 }
@@ -35,9 +34,7 @@ void X11Window::createWindowContext()
 
     screen = DefaultScreen(display);
     rootWindow = DefaultRootWindow(display);
-    visual = DefaultVisual(display, screen);
 
-    XVisualInfo visualInfo;
     XMatchVisualInfo(display, screen, 32, TrueColor, &visualInfo);
 
     attributes.colormap = XCreateColormap(display, rootWindow, visualInfo.visual, AllocNone);
@@ -52,8 +49,6 @@ void X11Window::createWindowContext()
     XFixesDestroyRegion(display, region);
 
     XMapWindow(display, window);
-
-    gc = XCreateGC(display, window, 0, 0);
 }
 
 void X11Window::setActiveMonitor(int monitorIndex)
@@ -107,39 +102,8 @@ void X11Window::resize(unsigned int width, unsigned int height)
     }
 }
 
-void X11Window::setFont(const std::string& fontname)
-{
-    if (font) {
-        XFreeFont(display, font);
-    }
-
-    font = XLoadQueryFont(display, fontname.c_str());
-    if (!font) {
-        std::cout << "loading X font... FAILED" << std::endl;
-        exit(1);
-    }
-    XSetFont(display, gc, font->fid);
-}
-
-XColor X11Window::createColor(
-    unsigned short red, 
-    unsigned short green, 
-    unsigned short blue, 
-    unsigned short alpha) 
-{
-    XColor color;
-    color.red = red * alpha;
-    color.green = green * alpha;
-    color.blue = blue * alpha;
-    color.flags = DoRed | DoGreen | DoBlue;
-
-    if (!XAllocColor(display, DefaultColormap(display, screen), &color)) {
-        std::cout << "creating X color... FAILED" << std::endl;
-        exit(1);
-    }
-
-    color.pixel |= alpha << 24;
-    return color;
+X11Canvas* X11Window::createCanvas() const{
+    return new X11Canvas(display, window, visualInfo.visual, screen);
 }
 
 bool X11Window::hasNextEvent()
@@ -175,24 +139,4 @@ void X11Window::clear() const
 void X11Window::flush() const
 {
     XFlush(display);
-}
-
-void X11Window::drawRect(int x, int y, unsigned int w, unsigned int h, const XColor& color) const
-{
-    XSetForeground(display, gc, color.pixel);
-    XFillRectangle(display, window, gc, x, y, w, h);
-}
-
-void X11Window::drawString(int x, int y, const std::string& text, const XColor& color) const
-{
-    XSetForeground(display, gc, color.pixel);
-    XDrawString(display, window, gc, x, y + font->ascent, text.c_str(), text.length());
-}
-
-Position X11Window::getStringDimension(const std::string& text) const
-{
-    Position pos;
-    pos.x = XTextWidth(font, text.c_str(), text.size()) - 1;
-    pos.y = font->ascent + font->descent;
-    return pos;
 }
