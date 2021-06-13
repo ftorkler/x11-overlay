@@ -1,7 +1,9 @@
 #ifndef OVERLAY_COLOR_H
 #define OVERLAY_COLOR_H
 
-struct Color
+#include <string>
+
+class Color
 {
 
 public:
@@ -12,6 +14,8 @@ public:
           unsigned char g = 255, 
           unsigned char b = 255, 
           unsigned char a = 255): r(r), g(g), b(b), a(a) { };
+
+    static Color fromAnsi(const std::string& ansi);
 
     bool operator == (Color other) 
     { 
@@ -25,6 +29,10 @@ public:
     { 
         return !(*this == other); 
     }
+
+    static Color _fromAnsi24bit(std::string code);
+    static Color _fromAnsi8bit(int code);
+
 };
 
 #endif // OVERLAY_COLOR_H
