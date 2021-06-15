@@ -24,7 +24,7 @@ $> pacman -S libx11 libxfixes libxrandr libxft freetype2
 ## Compile
 
 ```
-$> make
+$> make && ./bin/run_tests
 ```
 
 # Usage
