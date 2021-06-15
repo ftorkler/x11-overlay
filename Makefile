@@ -8,7 +8,7 @@ EXE := $(BIN_DIR)/overlay
 SRC := $(filter-out $(SRC_DIR)/overlay.cpp, $(wildcard $(SRC_DIR)/*.cpp))
 OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-TEST_EXE := $(BIN_DIR)/test
+TEST_EXE := $(BIN_DIR)/run_tests
 TEST_SRC := $(wildcard $(TEST_SRC_DIR)/*.cpp)
 
 CPPFLAGS := -Iinclude -MMD -MP
