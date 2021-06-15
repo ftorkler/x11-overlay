@@ -28,3 +28,6 @@ jobs:
 
       - name: build
         run: make
+
+      - name: run tests
+        run: ./bin/run_tests
