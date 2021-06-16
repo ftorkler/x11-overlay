@@ -12,8 +12,8 @@ Gui::Gui()
     messageY(0), 
     messageMaxWidth(0),
     mouseOver(false),
-    dirty(true),
-    dirtyLines(true),
+    redraw(true),
+    recalc(true),
     screenEdgeSpacing(0),
     lineSpacing(0),
     mouseOverTolerance(0),
@@ -34,21 +34,21 @@ Gui::~Gui()
 
 void Gui::setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-    dirty = true;
+    redraw = true;
     fgColor = Color(r, g, b, a);
     setMouseOverDimming(dimming);
 }
 
 void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-    dirty = true;
+    redraw = true;
     bgColor = Color(r, g, b, a);
     setMouseOverDimming(dimming);
 }
 
 void Gui::setMouseOverDimming(const float& dimming)
 {
-    dirty = true;
+    redraw = true;
     this->dimming = dimming;
     fgColorDim = Color(fgColor.r, fgColor.g, fgColor.b, (unsigned char)(fgColor.a * (1.0 - dimming)));
     bgColorDim = Color(bgColor.r, bgColor.g, bgColor.b, (unsigned char)(bgColor.a * (1.0 - dimming)));
@@ -56,26 +56,27 @@ void Gui::setMouseOverDimming(const float& dimming)
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
 {
-    dirty = true;
+    redraw = true;
     mouseOverTolerance = tolerance;
 }
 
 void Gui::setOrientation(Orientation orientation) 
 {
-    dirty = true;
-    dirtyLines = true;
+    redraw = true;
+    recalc = true;
     this->orientation = orientation;
 }
 
 void Gui::setScreenEdgeSpacing(unsigned int spacing)
 {
-    dirty = true;
+    redraw = true;
     screenEdgeSpacing = spacing;
 }
 
 void Gui::setLineSpacing(unsigned int spacing)
 {
-    dirty = true;
+    redraw = true;
+    recalc = true;
     lineSpacing = spacing;
 }
 
@@ -84,19 +85,15 @@ void Gui::flush()
     int w = messageMaxWidth;
     int h = messageY;
 
-    if (dirtyLines) {
-        dirtyLines = false;
-
-        for (auto& line : lines) {
-            line.x = calcXforOrientation(line.w, messageMaxWidth, 0);
-        }
+    if (recalc) {
+        // TODO recalculation of individual line positions (or simply add all messages once again?)
     }
 
     bool currentMouseOver = isMouseOver();
-    dirty |= mouseOver == currentMouseOver;
+    redraw |= mouseOver == currentMouseOver;
     mouseOver = currentMouseOver;
 
-    if (!dirty) {
+    if (!redraw) {
         return;
     }
 
@@ -106,47 +103,50 @@ void Gui::flush()
         window->resize(w, h);   
         updateWindowPosition();
 
+        int offsetX = calcXforOrientation(0, messageMaxWidth, 0);
+
         canvas->setColor(mouseOver ? bgColorDim : bgColor);
-        for (auto line : lines) {
-            if (line.message.size()) {
-                canvas->drawRect(line.x, line.y, line.w, line.h);
-            }
+        for (auto cmd : drawBgCommands) {
+            cmd->draw(canvas, offsetX, mouseOver);
         }
         canvas->setColor(mouseOver ? fgColorDim : fgColor);
-        for (auto line : lines) {
-            if (line.message.size()) {
-                canvas->drawString(line.x, line.y, line.message);
-            }
+        for (auto cmd : drawFgCommands) {
+            cmd->draw(canvas, offsetX, mouseOver);
         }
     }
 
     window->flush();
 
-    dirty = false;
+    redraw = false;
 }
 
 void Gui::clearMessages() 
 {
-    dirty = true;
-    dirtyLines = true;
+    redraw = true;
 
     messageMaxWidth = 0;
     messageY = 0;
 
-    lines.clear();
+    clippingBoxes.clear();
+    drawBgCommands.erase(drawBgCommands.begin(), drawBgCommands.end());
+    drawFgCommands.erase(drawFgCommands.begin(), drawFgCommands.end());
 }
 
 
 void Gui::addMessage(const std::string& message) 
 {
-    dirty = true;
-    dirtyLines = true;
+    redraw = true;
 
     std::string trimmedMessage = trimForOrientation(message);
 
     Dimesion dim = canvas->getStringDimension(trimmedMessage);
 
-    lines.emplace_back(Line(0, messageY, dim.w, dim.h, trimmedMessage));
+    if (!trimmedMessage.empty()) {
+        int x = calcXforOrientation(dim.w, 0, 0);
+        drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, dim.w, dim.h));
+        drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, trimmedMessage));
+        clippingBoxes.emplace_back(ClippingAABB(x, messageY, dim.w, dim.h));
+    }
 
     if (dim.x > messageMaxWidth) {
         messageMaxWidth = dim.w;
@@ -184,11 +184,12 @@ bool Gui::isMouseOver() const
         pos.y - t < h;
         
     if (isInFrame) {
-        for (auto line : lines) {
-            if (pos.x + t >= line.x && 
-                pos.y + t >= line.y && 
-                pos.x - t <= line.x + (int)line.w && 
-                pos.y - t <= line.y + (int)line.h) 
+        int offsetX = calcXforOrientation(0, messageMaxWidth, 0);
+        for (auto box : clippingBoxes) {
+            if (pos.x + t >= box.x + offsetX && 
+                pos.y + t >= box.y && 
+                pos.x - t <= box.x + offsetX + (int)box.w && 
+                pos.y - t <= box.y + (int)box.h)
             {
                 return true;
             }
@@ -267,4 +268,46 @@ Gui::Orientation Gui::orientationFromString(const std::string& input)
         }
     }
     return Orientation::NONE;
+}
+
+
+
+DrawColorCmd::DrawColorCmd(const Color& color)
+:
+    color(color)
+{
+}
+
+ void DrawColorCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+ {
+     canvas->setColor(color);
+ }
+
+DrawRectCmd::DrawRectCmd(int x, int y, unsigned int w, unsigned int h)
+:
+    DrawCmd(),
+    x(x),
+    y(y),
+    w(w),
+    h(h)
+{
+}
+
+void DrawRectCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+{
+    canvas->drawRect(x + offsetX, y, w, h);
+}
+
+DrawTextCmd::DrawTextCmd(int x, int y, const std::string& text)
+:
+    DrawCmd(),
+    x(x),
+    y(y),
+    text(text)
+{
+}
+
+void DrawTextCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+{
+    canvas->drawString(x + offsetX, y, text);
 }

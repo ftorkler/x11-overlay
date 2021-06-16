@@ -9,6 +9,7 @@
 
 class X11Canvas;
 class X11Window;
+class DrawCmd;
 
 class Gui
 {
@@ -39,14 +40,10 @@ public:
 
 private:
 
-    struct Line {
-        
-        int x, y;
+    struct ClippingAABB {
+        ClippingAABB(int x, int y, unsigned int w, unsigned int h): x(x), y(y), w(w), h(h) {}
+        const int x, y;
         const unsigned int w, h;
-        const std::string message;
-
-        Line(int x, int y, unsigned int w, unsigned  int h, const std::string& message) 
-            : x(x), y(y), w(w), h(h), message(message) { };
     };
 
     std::string trimForOrientation(const std::string& text) const;
@@ -57,10 +54,12 @@ private:
 
     X11Window* window;
     X11Canvas* canvas;
-    std::vector<Line> lines;
+    std::vector<DrawCmd*> drawBgCommands;
+    std::vector<DrawCmd*> drawFgCommands;
+    std::vector<ClippingAABB> clippingBoxes;
     int messageY, messageMaxWidth;
     bool mouseOver;
-    bool dirty, dirtyLines;
+    bool redraw, recalc;
 
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;
@@ -70,6 +69,64 @@ private:
     Color fgColorDim;
     Color bgColor;
     Color bgColorDim;
+
+};
+
+
+class DrawCmd
+{
+
+public:
+
+    virtual ~DrawCmd() {};
+    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const = 0;
+
+};
+
+class DrawColorCmd : public DrawCmd
+{
+
+public:
+
+    DrawColorCmd(const Color& color);
+
+    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+
+private:
+
+    Color color;
+
+};
+
+class DrawRectCmd : public DrawCmd
+{
+
+public:
+
+    DrawRectCmd(int x, int y, unsigned int w, unsigned int h);
+
+    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+
+private:
+
+    int x, y;
+    unsigned int w, h;
+
+};
+
+class DrawTextCmd : public DrawCmd
+{
+
+public:
+
+    DrawTextCmd(int x, int y, const std::string& text);
+
+    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+
+private:
+
+    int x, y;
+    std::string text;
 
 };
 
