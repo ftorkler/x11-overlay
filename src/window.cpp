@@ -61,7 +61,6 @@ void X11Window::setActiveMonitor(int monitorIndex)
     monitor.y = monitors[index].y;
     monitor.width = monitors[index].width;
     monitor.height = monitors[index].height;
-    delete monitors;
 
     move(x, y);
 }
