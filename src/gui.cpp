@@ -86,7 +86,7 @@ void Gui::flush()
     int h = messageY;
 
     if (recalc) {
-        // TODO recalculation of individual line positions (or simply add all messages once again?)
+        // TODO recalculation of individual line positions (or simply reinsert all messages once again?)
     }
 
     bool currentMouseOver = isMouseOver();
@@ -127,9 +127,9 @@ void Gui::clearMessages()
     messageMaxWidth = 0;
     messageY = 0;
 
-    clippingBoxes.clear();
     drawBgCommands.erase(drawBgCommands.begin(), drawBgCommands.end());
     drawFgCommands.erase(drawFgCommands.begin(), drawFgCommands.end());
+    clippingBoxes.clear();
 }
 
 
@@ -143,9 +143,10 @@ void Gui::addMessage(const std::string& message)
 
     if (!trimmedMessage.empty()) {
         int x = calcXforOrientation(dim.w, 0, 0);
-        drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, dim.w, dim.h));
-        drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, trimmedMessage));
         clippingBoxes.emplace_back(ClippingAABB(x, messageY, dim.w, dim.h));
+        drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, dim.w, dim.h));
+
+        drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, trimmedMessage));
     }
 
     if (dim.x > messageMaxWidth) {
