@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "ansi.h"
 #include "canvas.h"
 #include "window.h"
 
@@ -17,13 +18,13 @@ Gui::Gui()
     screenEdgeSpacing(0),
     lineSpacing(0),
     mouseOverTolerance(0),
-    dimming(0.75)
+    alpha(0.25)
 {
     window = new X11Window(0, 0, 480, 640);
     canvas = window->createCanvas();
 
     setDefaultBackgroundColor(0, 0, 0, 100);
-    setDefaultForgroundColor(255, 0, 0, 200);
+    setDefaultForgroundColor(255, 255, 255, 200);
 }
 
 Gui::~Gui()
@@ -36,22 +37,18 @@ void Gui::setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned ch
 {
     redraw = true;
     fgColor = Color(r, g, b, a);
-    setMouseOverDimming(dimming);
 }
 
 void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     redraw = true;
     bgColor = Color(r, g, b, a);
-    setMouseOverDimming(dimming);
 }
 
 void Gui::setMouseOverDimming(const float& dimming)
 {
     redraw = true;
-    this->dimming = dimming;
-    fgColorDim = Color(fgColor.r, fgColor.g, fgColor.b, (unsigned char)(fgColor.a * (1.0 - dimming)));
-    bgColorDim = Color(bgColor.r, bgColor.g, bgColor.b, (unsigned char)(bgColor.a * (1.0 - dimming)));
+    this->alpha = 1.0f - dimming;
 }
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
@@ -100,18 +97,19 @@ void Gui::flush()
     window->clear();
 
     if (w >0 && h > 0) {
-        window->resize(w, h);   
+        window->resize(w, h);
         updateWindowPosition();
 
         int offsetX = calcXforOrientation(0, messageMaxWidth, 0);
 
-        canvas->setColor(mouseOver ? bgColorDim : bgColor);
+        float a = mouseOver ? alpha : 1.0f;
+        DrawColorCmd(bgColor).draw(canvas, offsetX, a);
         for (auto cmd : drawBgCommands) {
-            cmd->draw(canvas, offsetX, mouseOver);
+            cmd->draw(canvas, offsetX, a);
         }
-        canvas->setColor(mouseOver ? fgColorDim : fgColor);
+        DrawColorCmd(fgColor).draw(canvas, offsetX, a);
         for (auto cmd : drawFgCommands) {
-            cmd->draw(canvas, offsetX, mouseOver);
+            cmd->draw(canvas, offsetX, a);
         }
     }
 
@@ -142,16 +140,55 @@ void Gui::addMessage(const std::string& message)
     Dimesion dim = canvas->getStringDimension(trimmedMessage);
 
     if (!trimmedMessage.empty()) {
-        int x = calcXforOrientation(dim.w, 0, 0);
-        clippingBoxes.emplace_back(ClippingAABB(x, messageY, dim.w, dim.h));
-        drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, dim.w, dim.h));
 
-        drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, trimmedMessage));
+        std::vector<std::string> chunks = Ansi::split(trimmedMessage);
+        
+        int w = 0;
+        for (auto chunk : chunks) {
+            w += Ansi::parseControlSequence(chunk) == Ansi::Sequence::NONE ? canvas->getStringDimension(chunk).w : 0;
+        }
+
+        int x = calcXforOrientation(w, 0, 0);
+        clippingBoxes.emplace_back(ClippingAABB(x, messageY, w, dim.h));
+
+        for (auto chunk : chunks) {
+            Ansi::Sequence sequence = Ansi::parseControlSequence(chunk);
+            switch (sequence)
+            {
+            case Ansi::RESET:
+                drawFgCommands.emplace_back(new DrawColorCmd(fgColor));
+                drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
+                break;
+            case Ansi::RESET_FOREGROUND:
+                drawFgCommands.emplace_back(new DrawColorCmd(fgColor));
+                break;
+            case Ansi::RESET_BACKGROUND:
+                drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
+                break;
+            case Ansi::FOREGROUND_COLOR:
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk)));
+                break;
+            case Ansi::BACKGROUND_COLOR:
+                drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk)));
+                break;
+            case Ansi::NONE:
+            {
+                int chunkW = canvas->getStringDimension(chunk).w;
+                drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, chunkW, dim.h));
+                drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, chunk));
+                x += chunkW;
+                break;
+            }
+            default:
+                break;
+            }
+        }
+
+        if (w > messageMaxWidth) {
+            messageMaxWidth = w;
+        }
     }
 
-    if (dim.x > messageMaxWidth) {
-        messageMaxWidth = dim.w;
-    }
     messageY += dim.h + lineSpacing;
 }
 
@@ -279,9 +316,9 @@ DrawColorCmd::DrawColorCmd(const Color& color)
 {
 }
 
- void DrawColorCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+ void DrawColorCmd::draw(X11Canvas* canvas, int offsetX, float alpha) const
  {
-     canvas->setColor(color);
+     canvas->setColor(Color(color.r, color.g, color.b, color.a * alpha));
  }
 
 DrawRectCmd::DrawRectCmd(int x, int y, unsigned int w, unsigned int h)
@@ -294,7 +331,7 @@ DrawRectCmd::DrawRectCmd(int x, int y, unsigned int w, unsigned int h)
 {
 }
 
-void DrawRectCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+void DrawRectCmd::draw(X11Canvas* canvas, int offsetX, float alpha) const
 {
     canvas->drawRect(x + offsetX, y, w, h);
 }
@@ -308,7 +345,7 @@ DrawTextCmd::DrawTextCmd(int x, int y, const std::string& text)
 {
 }
 
-void DrawTextCmd::draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const
+void DrawTextCmd::draw(X11Canvas* canvas, int offsetX, float alpha) const
 {
     canvas->drawString(x + offsetX, y, text);
 }

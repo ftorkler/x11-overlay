@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#define FONT_X_OFFSET 4
-
 X11Canvas::X11Canvas(Display* display, Window window, Visual* visual, int screen)
 :
     display(display),
@@ -65,7 +63,7 @@ void X11Canvas::drawRect(int x, int y, unsigned int w, unsigned int h) const
 
 void X11Canvas::drawString(int x, int y, const std::string& text) const
 {
-    XftDrawStringUtf8(xftDraw, &xftColor, xftFont, x + FONT_X_OFFSET, y + xftFont->ascent - 1, (const FcChar8*)text.c_str(), text.size());
+    XftDrawStringUtf8(xftDraw, &xftColor, xftFont, x, y + xftFont->ascent - 1, (const FcChar8*)text.c_str(), text.size());
 }
 
 IntPair X11Canvas::getStringDimension(const std::string& text) const
@@ -74,7 +72,7 @@ IntPair X11Canvas::getStringDimension(const std::string& text) const
     XftTextExtentsUtf8(display, xftFont, (FcChar8*)text.c_str(), text.size(), &extents);
 
     IntPair p;
-    p.w = extents.xOff + FONT_X_OFFSET * 2;
+    p.w = extents.xOff;
     p.h = xftFont->ascent + xftFont->descent;
     return p;
 }

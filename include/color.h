@@ -1,8 +1,6 @@
 #ifndef OVERLAY_COLOR_H
 #define OVERLAY_COLOR_H
 
-#include <string>
-
 class Color
 {
 

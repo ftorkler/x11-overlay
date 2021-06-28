@@ -11,8 +11,20 @@ class Ansi
 
 public:
 
+    enum Sequence {
+        NONE,
+        FOREGROUND_COLOR,
+        BACKGROUND_COLOR,
+        RESET,
+        RESET_FOREGROUND,
+        RESET_BACKGROUND,
+        UNKNOWN
+    };
+
     static Color toColor(const std::string &ansi);
     
+    static Sequence parseControlSequence(const std::string& text);
+
     static std::vector<std::string> split(const std::string text);
 
     // visible for testing

@@ -64,11 +64,9 @@ private:
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;
     unsigned int mouseOverTolerance;
-    float dimming;
+    float alpha;
     Color fgColor;
-    Color fgColorDim;
     Color bgColor;
-    Color bgColorDim;
 
 };
 
@@ -79,7 +77,7 @@ class DrawCmd
 public:
 
     virtual ~DrawCmd() {};
-    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const = 0;
+    virtual void draw(X11Canvas* canvas, int offsetX, float alpha) const = 0;
 
 };
 
@@ -90,7 +88,7 @@ public:
 
     DrawColorCmd(const Color& color);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+    virtual void draw(X11Canvas* canvas, int offsetX, float alpha) const;
 
 private:
 
@@ -105,7 +103,7 @@ public:
 
     DrawRectCmd(int x, int y, unsigned int w, unsigned int h);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+    virtual void draw(X11Canvas* canvas, int offsetX, float alpha) const;
 
 private:
 
@@ -121,7 +119,7 @@ public:
 
     DrawTextCmd(int x, int y, const std::string& text);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, bool isMouseOver) const;
+    virtual void draw(X11Canvas* canvas, int offsetX, float alpha) const;
 
 private:
 

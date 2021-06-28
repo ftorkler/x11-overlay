@@ -58,18 +58,69 @@ void TestAnsi::test_to_8bit_color()
 
 void TestAnsi::test_to_color()
 {
+	// 3-bit (standard foreground colors)
+	check_to_color("\e[30m", Color(0,0,0));       // 00: #000000 black
+	check_to_color("\e[31m", Color(128,0,0));     // 01: #800000 red
+	check_to_color("\e[32m", Color(0,128,0));     // 02: #008000 green
+	check_to_color("\e[33m", Color(128,128,0));   // 03: #808000 yelow
+	check_to_color("\e[34m", Color(0,0,128));     // 04: #000080 blue
+	check_to_color("\e[35m", Color(128,0,128));   // 05: #800080 magenta
+	check_to_color("\e[36m", Color(0,128,128));   // 06: #008080 cyan
+	check_to_color("\e[37m", Color(192,192,192)); // 07: #c0c0c0 white
+
+	// 3-bit (high-intensity foreground colors)
+	check_to_color("\e[90m", Color(128,128,128)); // 08: #808080 bright black
+	check_to_color("\e[91m", Color(255,0,0));     // 09: #ff0000 bright red
+	check_to_color("\e[92m", Color(0,255,0));     // 10: #00ff00 bright green
+	check_to_color("\e[93m", Color(255,255,0));   // 11: #ffff00 bright yelow
+	check_to_color("\e[94m", Color(0,0,255));     // 12: #0000ff bright blue
+	check_to_color("\e[95m", Color(255,0,255));   // 13: #ff00ff bright magenta
+	check_to_color("\e[96m", Color(0,255,255));   // 14: #00ffff bright cyan
+	check_to_color("\e[97m", Color(255,255,255)); // 15: #ffffff bright white
+
+	// 3-bit (standard background colors)
+	check_to_color("\e[40m", Color(0,0,0));       // 00: #000000 black
+	check_to_color("\e[41m", Color(128,0,0));     // 01: #800000 red
+	check_to_color("\e[42m", Color(0,128,0));     // 02: #008000 green
+	check_to_color("\e[43m", Color(128,128,0));   // 03: #808000 yelow
+	check_to_color("\e[44m", Color(0,0,128));     // 04: #000080 blue
+	check_to_color("\e[45m", Color(128,0,128));   // 05: #800080 magenta
+	check_to_color("\e[46m", Color(0,128,128));   // 06: #008080 cyan
+	check_to_color("\e[47m", Color(192,192,192)); // 07: #c0c0c0 white
+
+	// 3-bit (high-intensity background colors)
+	check_to_color("\e[100m", Color(128,128,128)); // 08: #808080 bright black
+	check_to_color("\e[101m", Color(255,0,0));     // 09: #ff0000 bright red
+	check_to_color("\e[102m", Color(0,255,0));     // 10: #00ff00 bright green
+	check_to_color("\e[103m", Color(255,255,0));   // 11: #ffff00 bright yelow
+	check_to_color("\e[104m", Color(0,0,255));     // 12: #0000ff bright blue
+	check_to_color("\e[105m", Color(255,0,255));   // 13: #ff00ff bright magenta
+	check_to_color("\e[106m", Color(0,255,255));   // 14: #00ffff bright cyan
+	check_to_color("\e[107m", Color(255,255,255)); // 15: #ffffff bright white
+
 	// 8bit
 	check_to_color("\e[38;5;2m", Color(0, 128, 0));
 	check_to_color("\e[38;5;23m", Color(0, 95, 95));
 	check_to_color("\e[38;5;234m", Color(28, 28, 28));
+	check_to_color("\e[48;5;2m", Color(0, 128, 0));
+	check_to_color("\e[48;5;23m", Color(0, 95, 95));
+	check_to_color("\e[48;5;234m", Color(28, 28, 28));
 
 	// 24bit
 	check_to_color("\e[38;2;1;13;145m", Color(1, 13, 145));         // colorprofile <none>
 	check_to_color("\e[38;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0' 
 	check_to_color("\e[38;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1' 
+	check_to_color("\e[48;2;1;13;145m", Color(1, 13, 145));         // colorprofile <none>
+	check_to_color("\e[48;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0' 
+	check_to_color("\e[48;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1' 
 
-	check_to_color("\e[38;2;0;0;256m", Color(255, 255, 255));
-	check_to_color("\e[38;2;0;0;-1m", Color(255, 255, 255));
+
+	check_to_color("\e[38;2;0;0;256m", Color(255, 255, 255)); 		// out of range -> fallback color
+	check_to_color("\e[38;2;0;0;-1m", Color(255, 255, 255));  		// out of range -> fallback color
+	check_to_color("\e[38;2;0;0;255m", Color(0, 0, 255));			// in range 
+	check_to_color("\e[38;2;0;0;0m", Color(0, 0, 0));				// in range
+	check_to_color("\e[48;2;0;0;255m", Color(0, 0, 255));			// in range 
+	check_to_color("\e[48;2;0;0;0m", Color(0, 0, 0));				// in range
 }
 
 
@@ -78,18 +129,104 @@ void TEST_EQUAL(std::string given, std::string expected)
     TEST_CHECK_(given == expected, "expected '%s', but was '%s'", expected.c_str(), given.c_str());
 }
 
-void TestAnsi::test_split() {
+void TestAnsi::test_split() 
+{
     std::vector<std::string> tokens;
     
+	/* don't split text */
+	TEST_CASE("don't split text");
     tokens = Ansi::split("text without colors");
     TEST_ASSERT(tokens.size() == 1);
     TEST_CHECK(tokens[0] == "text without colors");
 
+	/* split text ans simple ansi control sequence */
     tokens = Ansi::split("text with \e[38;5;2mred\e[0m color");
+	TEST_CASE("split text ans simple ansi control sequence");
     TEST_ASSERT(tokens.size() == 5);
     TEST_EQUAL(tokens[0], "text with ");
     TEST_EQUAL(tokens[1], "\e[38;5;2m");
     TEST_EQUAL(tokens[2], "red");
     TEST_EQUAL(tokens[3], "\e[0m");
     TEST_EQUAL(tokens[4], " color");
+
+	/* split complex ansi control sequence into simple ansi control sequences */
+
+// TODO implement
+
+	// TEST_CASE("split complex into simple ansi control sequences");
+	// tokens = Ansi::split("\e[0;1;33,43m");
+    // TEST_ASSERT(tokens.size() == 4);
+	// TEST_EQUAL(tokens[0], "\e[0m");
+	// TEST_EQUAL(tokens[1], "\e[1m");
+	// TEST_EQUAL(tokens[2], "\e[33m");
+	// TEST_EQUAL(tokens[3], "\e[43m");
+}
+
+template <typename Enumeration>
+auto as_integer(Enumeration const value)
+    -> typename std::underlying_type<Enumeration>::type
+{
+    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+}
+
+void TEST_EQUAL(Ansi::Sequence given, Ansi::Sequence expected)
+{
+    TEST_CHECK_(given == expected, "expected '%d', but was '%d'", as_integer(expected), as_integer(given));
+}
+
+void TestAnsi::test_parse_control_sequence()
+{
+	TEST_EQUAL(Ansi::parseControlSequence("\e[30m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[31m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[32m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[33m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[34m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[35m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[36m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[37m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[38;5;2m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[38;2;255;255;255m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[90m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[91m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[92m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[93m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[94m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[95m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[96m"), Ansi::Sequence::FOREGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[97m"), Ansi::Sequence::FOREGROUND_COLOR);
+
+	TEST_EQUAL(Ansi::parseControlSequence("\e[40m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[41m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[42m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[43m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[44m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[45m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[46m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[47m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[48;5;2m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[48;2;255;255;255m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[100m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[101m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[102m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[103m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[104m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[105m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[106m"), Ansi::Sequence::BACKGROUND_COLOR);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[107m"), Ansi::Sequence::BACKGROUND_COLOR);
+
+	TEST_EQUAL(Ansi::parseControlSequence("\e[0m"), Ansi::Sequence::RESET);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[0;0m"), Ansi::Sequence::RESET);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[39m"), Ansi::Sequence::RESET_FOREGROUND);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[49m"), Ansi::Sequence::RESET_BACKGROUND);
+
+	TEST_EQUAL(Ansi::parseControlSequence(""), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("text"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[m"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[38;5;2"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("e[38;5;2m"), Ansi::Sequence::NONE);
+
+	TEST_EQUAL(Ansi::parseControlSequence("\e[8m"), Ansi::Sequence::UNKNOWN);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[88m"), Ansi::Sequence::UNKNOWN);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[888m"), Ansi::Sequence::UNKNOWN);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[888888888888888888888888m"), Ansi::Sequence::UNKNOWN);
 }

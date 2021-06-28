@@ -4,6 +4,11 @@
 <img alt="Build Status" src="https://img.shields.io/github/workflow/status/ftorkler/x11-overlay/CI%20Build?logo=github">
 </p>
 
+# Features
+
+* screen selection for multi-monitor setup
+* colorized text with Ansi Escape Sequences.  
+Supported are the well known color formats for 3-4bit, 8bit and 24bit (see [SGR](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters "Select_Graphic_Rendition")).
 
 # Installation
 
