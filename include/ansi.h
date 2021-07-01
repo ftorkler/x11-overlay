@@ -22,15 +22,16 @@ public:
     };
 
     static Color toColor(const std::string &ansi);
-    
-    static Sequence parseControlSequence(const std::string& text);
-
-    static std::vector<std::string> split(const std::string text);
-
     // visible for testing
     static Color _to24bitColor(std::string code);
     // visible for testing
     static Color _to8bitColor(int code);
+
+    static Sequence parseControlSequence(const std::string& text);
+
+    static std::vector<std::string> split(const std::string text);
+    // visible for testing
+    static void subsplit(const std::string& text, std::vector<std::string>* result);
 
 };
 

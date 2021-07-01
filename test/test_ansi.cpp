@@ -1,6 +1,7 @@
 #include "test_ansi.h"
 
 #include "acutest.h"
+#include <algorithm>
 #include <string>
 
 #include "ansi.h"
@@ -126,6 +127,8 @@ void TestAnsi::test_to_color()
 
 void TEST_EQUAL(std::string given, std::string expected)
 {
+	std::replace(given.begin(), given.end(), '\e', '^');
+	std::replace(expected.begin(), expected.end(), '\e', '^');
     TEST_CHECK_(given == expected, "expected '%s', but was '%s'", expected.c_str(), given.c_str());
 }
 
@@ -139,9 +142,9 @@ void TestAnsi::test_split()
     TEST_ASSERT(tokens.size() == 1);
     TEST_CHECK(tokens[0] == "text without colors");
 
-	/* split text ans simple ansi control sequence */
+	/* split text with simple ansi control sequence inbetween */
     tokens = Ansi::split("text with \e[38;5;2mred\e[0m color");
-	TEST_CASE("split text ans simple ansi control sequence");
+	TEST_CASE("split text with simple ansi control sequence inbetween");
     TEST_ASSERT(tokens.size() == 5);
     TEST_EQUAL(tokens[0], "text with ");
     TEST_EQUAL(tokens[1], "\e[38;5;2m");
@@ -149,17 +152,73 @@ void TestAnsi::test_split()
     TEST_EQUAL(tokens[3], "\e[0m");
     TEST_EQUAL(tokens[4], " color");
 
+	/* split text with simple ansi control sequence at beginning */
+	tokens = Ansi::split("\e[38;5;2mtext with red\e[0m color");
+	TEST_CASE("split text with simple ansi control sequence at beginning");
+    TEST_ASSERT(tokens.size() == 4);
+    TEST_EQUAL(tokens[0], "\e[38;5;2m");
+	TEST_EQUAL(tokens[1], "text with red");
+    TEST_EQUAL(tokens[2], "\e[0m");
+    TEST_EQUAL(tokens[3], " color");
+
+	/* split text with simple ansi control sequence at beginning and end */
+	tokens = Ansi::split("\e[38;5;2mtext with red color\e[0m");
+	TEST_CASE("split text with simple ansi control sequence at beginning");
+    TEST_ASSERT(tokens.size() == 3);
+    TEST_EQUAL(tokens[0], "\e[38;5;2m");
+	TEST_EQUAL(tokens[1], "text with red color");
+    TEST_EQUAL(tokens[2], "\e[0m");
+
 	/* split complex ansi control sequence into simple ansi control sequences */
+	TEST_CASE("split complex into simple ansi control sequences");
+	tokens = Ansi::split("text \e[0;1;33;43m.");
+    TEST_ASSERT(tokens.size() == 6);
+	TEST_EQUAL(tokens[0], "text ");
+	TEST_EQUAL(tokens[1], "\e[0m");
+	TEST_EQUAL(tokens[2], "\e[1m");
+	TEST_EQUAL(tokens[3], "\e[33m");
+	TEST_EQUAL(tokens[4], "\e[43m");
+	TEST_EQUAL(tokens[5], ".");
+}
 
-// TODO implement
+void checkNoSplit(std::string text)
+{
+	std::vector<std::string> tokens;
+	Ansi::subsplit(text, &tokens);
+    TEST_ASSERT(tokens.size() == 1);
+    TEST_CHECK(tokens[0] == text);
+}
 
-	// TEST_CASE("split complex into simple ansi control sequences");
-	// tokens = Ansi::split("\e[0;1;33,43m");
-    // TEST_ASSERT(tokens.size() == 4);
-	// TEST_EQUAL(tokens[0], "\e[0m");
-	// TEST_EQUAL(tokens[1], "\e[1m");
-	// TEST_EQUAL(tokens[2], "\e[33m");
-	// TEST_EQUAL(tokens[3], "\e[43m");
+void TestAnsi::test_subsplit() 
+{
+	std::vector<std::string> tokens;
+    
+	/* don't split text */
+	TEST_CASE("don't split text");
+    Ansi::subsplit("normal text", &tokens);
+    TEST_ASSERT(tokens.size() == 1);
+    TEST_CHECK(tokens[0] == "normal text");
+	tokens.clear();
+
+	/* don't split text */
+	TEST_CASE("don't split simple ansi control sequences");
+    checkNoSplit("normal text");
+    checkNoSplit("\e[0m");
+    checkNoSplit("\e[38;2;255;255;255m");
+
+	/* split complex ansi sequence into two simple ones */
+	TEST_CASE("split complex ansi sequence into two simple ones");
+	Ansi::subsplit("\e[0;1m", &tokens);
+    TEST_ASSERT(tokens.size() == 2);
+    TEST_CHECK(tokens[0] == "\e[0m");
+    TEST_CHECK(tokens[1] == "\e[1m");
+	tokens.clear();
+
+	Ansi::subsplit("\e[38;5;3;0m", &tokens);
+    TEST_ASSERT(tokens.size() == 2);
+    TEST_CHECK(tokens[0] == "\e[38;5;3m");
+    TEST_CHECK(tokens[1] == "\e[0m");
+	tokens.clear();
 }
 
 template <typename Enumeration>

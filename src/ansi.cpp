@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <deque>
 
+#define ANSI_INIT '\e['
 #define ANSI_START '\e'
 #define ANSI_END 'm'
 #define ANSI_DELIMITER ';'
@@ -22,7 +24,7 @@
 Color Ansi::toColor(const std::string& ansi)
 {
     int pos;
-    if (ansi.rfind("\e[") != 0) {
+    if (ansi.rfind(ANSI_INIT) != 0) {
         // fallback
         return FALLBACK_COLOR;
     }
@@ -217,16 +219,64 @@ std::vector<std::string> Ansi::split(const std::string text)
 
     std::vector<std::string> result;
     size_t start = 0, end;
-    int i = 0;
+    int i = text[0] == ANSI_START ? 1 : 0;
     
     while ((end = text.find_first_of(token[i], start)) != std::string::npos) {
         end = end + i;
-        result.emplace_back(text.substr(start, end - start));
+        subsplit(text.substr(start, end - start), &result);
 
         start = end;
         i = (i+1) % 2;
     }
-    result.emplace_back(text.substr(start, end));
+    if (start != text.size()) {
+        subsplit(text.substr(start, end), &result);
+    }
 
     return result;
+}
+
+void Ansi::subsplit(const std::string& text, std::vector<std::string>* result) {
+    if (text.size() <= 2 || text[0] != ANSI_START || text[text.size()-1] != ANSI_END) {
+        result->emplace_back(text);
+        return;
+    }
+
+    std::string token;
+    std::istringstream iss(text.substr(2, text.size()-3));
+    std::deque<int> codes;
+    while (getline(iss, token, ANSI_DELIMITER)) {
+        codes.push_back(stoi(token));
+    }
+
+    while (!codes.empty()) {
+        int code = codes.front();
+        codes.pop_front();
+
+        if (code == 38 || code == 48 || code == 58) {
+            std::stringstream sequence;
+            sequence << ANSI_INIT << code;
+
+            code = codes.front(); codes.pop_front();
+            sequence << ANSI_DELIMITER << code;
+
+            if (code == 2) {
+                sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
+                sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
+                sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
+            } 
+            else if (code == 5) {
+                sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
+            } 
+            else {
+                std::cout << "parsing ansi control sequence 'ESC" << text.substr(1, text.size()-1) << "'... FAILED" << std::endl;
+            }
+            sequence << ANSI_END;
+            result->emplace_back(sequence.str());
+        } 
+        else {
+            std::stringstream sequence;
+            sequence << ANSI_INIT << code << ANSI_END;
+            result->emplace_back(sequence.str());
+        } 
+    }
 }

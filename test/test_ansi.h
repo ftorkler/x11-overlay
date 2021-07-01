@@ -7,6 +7,7 @@ class TestAnsi
 public:
 
     static void test_split();
+    static void test_subsplit();
     static void test_parse_control_sequence();
 	static void test_to_8bit_color();
 	static void test_to_color();
