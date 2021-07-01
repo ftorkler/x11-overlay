@@ -15,13 +15,14 @@ public:
         NONE,
         FOREGROUND_COLOR,
         BACKGROUND_COLOR,
+        INCREASE_INTENSITY,
         RESET,
         RESET_FOREGROUND,
         RESET_BACKGROUND,
         UNKNOWN
     };
 
-    static Color toColor(const std::string &ansi);
+    static Color toColor(const std::string &ansi, bool increaseIntensity = false);
     // visible for testing
     static Color _to24bitColor(std::string code);
     // visible for testing

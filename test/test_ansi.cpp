@@ -16,9 +16,9 @@ void check_to_8bit_color(int givenCode, Color expectedColor)
 		expectedColor.r, expectedColor.g, expectedColor.b, expectedColor.a);
 }
 
-void check_to_color(std::string givenCode, Color expectedColor)
+void check_to_color(std::string givenCode, Color expectedColor, bool increaseIntensity = false)
 {
-	Color color = Ansi::toColor(givenCode);
+	Color color = Ansi::toColor(givenCode, increaseIntensity);
 	TEST_CHECK_(color == expectedColor, "fromAnsi(ESC%s) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)", 
 		givenCode.substr(1).c_str(),
 		color.r, color.g, color.b, color.a,
@@ -68,6 +68,7 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[35m", Color(128,0,128));   // 05: #800080 magenta
 	check_to_color("\e[36m", Color(0,128,128));   // 06: #008080 cyan
 	check_to_color("\e[37m", Color(192,192,192)); // 07: #c0c0c0 white
+	check_to_color("\e[30m", Color(128,128,128), true); // -> \e[90m
 
 	// 3-bit (high-intensity foreground colors)
 	check_to_color("\e[90m", Color(128,128,128)); // 08: #808080 bright black
@@ -78,6 +79,7 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[95m", Color(255,0,255));   // 13: #ff00ff bright magenta
 	check_to_color("\e[96m", Color(0,255,255));   // 14: #00ffff bright cyan
 	check_to_color("\e[97m", Color(255,255,255)); // 15: #ffffff bright white
+	check_to_color("\e[90m", Color(128,128,128), true); // -> no effect
 
 	// 3-bit (standard background colors)
 	check_to_color("\e[40m", Color(0,0,0));       // 00: #000000 black
@@ -88,6 +90,7 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[45m", Color(128,0,128));   // 05: #800080 magenta
 	check_to_color("\e[46m", Color(0,128,128));   // 06: #008080 cyan
 	check_to_color("\e[47m", Color(192,192,192)); // 07: #c0c0c0 white
+	check_to_color("\e[40m", Color(128,128,128), true); // -> \e[100m
 
 	// 3-bit (high-intensity background colors)
 	check_to_color("\e[100m", Color(128,128,128)); // 08: #808080 bright black
@@ -98,6 +101,7 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[105m", Color(255,0,255));   // 13: #ff00ff bright magenta
 	check_to_color("\e[106m", Color(0,255,255));   // 14: #00ffff bright cyan
 	check_to_color("\e[107m", Color(255,255,255)); // 15: #ffffff bright white
+	check_to_color("\e[100m", Color(128,128,128), true); // -> no effect
 
 	// 8bit
 	check_to_color("\e[38;5;2m", Color(0, 128, 0));
@@ -272,6 +276,8 @@ void TestAnsi::test_parse_control_sequence()
 	TEST_EQUAL(Ansi::parseControlSequence("\e[105m"), Ansi::Sequence::BACKGROUND_COLOR);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[106m"), Ansi::Sequence::BACKGROUND_COLOR);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[107m"), Ansi::Sequence::BACKGROUND_COLOR);
+
+	TEST_EQUAL(Ansi::parseControlSequence("\e[1m"), Ansi::Sequence::INCREASE_INTENSITY);
 
 	TEST_EQUAL(Ansi::parseControlSequence("\e[0m"), Ansi::Sequence::RESET);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[0;0m"), Ansi::Sequence::RESET);

@@ -151,11 +151,13 @@ void Gui::addMessage(const std::string& message)
         int x = calcXforOrientation(w, 0, 0);
         clippingBoxes.emplace_back(ClippingAABB(x, messageY, w, dim.h));
 
+        bool increaseIntensity = false;
         for (auto chunk : chunks) {
             Ansi::Sequence sequence = Ansi::parseControlSequence(chunk);
             switch (sequence)
             {
             case Ansi::RESET:
+                increaseIntensity = false;
                 drawFgCommands.emplace_back(new DrawColorCmd(fgColor));
                 drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
                 break;
@@ -166,10 +168,13 @@ void Gui::addMessage(const std::string& message)
                 drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
                 break;
             case Ansi::FOREGROUND_COLOR:
-                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk)));
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity)));
                 break;
             case Ansi::BACKGROUND_COLOR:
-                drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk)));
+                drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity)));
+                break;
+            case Ansi::INCREASE_INTENSITY:
+                increaseIntensity = true;
                 break;
             case Ansi::NONE:
             {

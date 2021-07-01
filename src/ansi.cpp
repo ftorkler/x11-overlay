@@ -4,7 +4,7 @@
 #include <sstream>
 #include <deque>
 
-#define ANSI_INIT '\e['
+#define ANSI_INIT "\e["
 #define ANSI_START '\e'
 #define ANSI_END 'm'
 #define ANSI_DELIMITER ';'
@@ -21,7 +21,7 @@
 
 
 // https://en.wikipedia.org/wiki/ANSI_escape_code
-Color Ansi::toColor(const std::string& ansi)
+Color Ansi::toColor(const std::string& ansi, bool increaseIntensity)
 {
     int pos;
     if (ansi.rfind(ANSI_INIT) != 0) {
@@ -49,10 +49,12 @@ Color Ansi::toColor(const std::string& ansi)
     if (ansi.find(ANSI_DELIMITER) == std::string::npos && (pos = ansi.rfind(ANSI_END)) >= 4) {
         int colorCode = stoi(ansi.substr(2, pos - 2));
         if (colorCode >= 30 && colorCode <= 37) {
-            return _to8bitColor(colorCode - 30);
+            int intensitiyLift = increaseIntensity ? 8 : 0;
+            return _to8bitColor(colorCode - 30 + intensitiyLift);
         }
         if (colorCode >= 40 && colorCode <= 47) {
-            return _to8bitColor(colorCode - 40);
+            int intensitiyLift = increaseIntensity ? 8 : 0;
+            return _to8bitColor(colorCode - 40 + intensitiyLift);
         }
         if (colorCode >= 90 && colorCode <= 97) {
             return _to8bitColor(colorCode - 90 + 8);
@@ -163,6 +165,8 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
     {
     case 0:
         return Ansi::Sequence::RESET;
+    case 1:
+        return Ansi::Sequence::INCREASE_INTENSITY;
     case 39:
         return Ansi::Sequence::RESET_FOREGROUND;
     case 49:
