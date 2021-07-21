@@ -5,6 +5,7 @@
 #include <X11/Xlib.h>
 #include <vector>
 
+#include "ansi.h"
 #include "color.h"
 
 class X11Canvas;
@@ -25,6 +26,7 @@ public:
 
     void setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
     void setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void setColorProfile(Ansi::Profile profile);
     void setMouseOverDimming(const float& dimming);
     void setMouseOverTolerance(unsigned int tolerance);
     void setOrientation(Orientation orientation);
@@ -60,6 +62,9 @@ private:
     int messageY, messageMaxWidth;
     bool mouseOver;
     bool redraw, recalc;
+    bool increaseIntensity;
+    std::string lastFgColor;
+    Ansi::Profile colorProfile;
 
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;

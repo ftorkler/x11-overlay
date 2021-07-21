@@ -63,13 +63,13 @@ void X11Canvas::drawRect(int x, int y, unsigned int w, unsigned int h) const
 
 void X11Canvas::drawString(int x, int y, const std::string& text) const
 {
-    XftDrawStringUtf8(xftDraw, &xftColor, xftFont, x, y + xftFont->ascent - 1, (const FcChar8*)text.c_str(), text.size());
+    XftDrawStringUtf8(xftDraw, &xftColor, xftFont, x, y + xftFont->ascent, (const FcChar8*)text.c_str(), text.size());
 }
 
 IntPair X11Canvas::getStringDimension(const std::string& text) const
 {
     XGlyphInfo extents;
-    XftTextExtentsUtf8(display, xftFont, (FcChar8*)text.c_str(), text.size(), &extents);
+    XftTextExtentsUtf8(display, xftFont, (const FcChar8*)text.c_str(), text.size(), &extents);
 
     IntPair p;
     p.w = extents.xOff;

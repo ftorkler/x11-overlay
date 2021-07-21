@@ -69,6 +69,7 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[36m", Color(0,128,128));   // 06: #008080 cyan
 	check_to_color("\e[37m", Color(192,192,192)); // 07: #c0c0c0 white
 	check_to_color("\e[30m", Color(128,128,128), true); // -> \e[90m
+	check_to_color("\e[36m", Color(0,255,255), true);   // -> \e[96m
 
 	// 3-bit (high-intensity foreground colors)
 	check_to_color("\e[90m", Color(128,128,128)); // 08: #808080 bright black

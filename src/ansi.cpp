@@ -21,7 +21,7 @@
 
 
 // https://en.wikipedia.org/wiki/ANSI_escape_code
-Color Ansi::toColor(const std::string& ansi, bool increaseIntensity)
+Color Ansi::toColor(const std::string& ansi, bool increaseIntensity, Ansi::Profile profile)
 {
     int pos;
     if (ansi.rfind(ANSI_INIT) != 0) {
@@ -41,7 +41,7 @@ Color Ansi::toColor(const std::string& ansi, bool increaseIntensity)
         // 8bit - ESC[48;5;<code>m - background color
         if (ansi.find(INFIX_COLOR_8BIT) == PREFIX_COLOR_LEN && (pos = ansi.rfind(ANSI_END)) > PREFIX_COLOR_8BIT_LEN) {
             std::string colorCode = ansi.substr(PREFIX_COLOR_8BIT_LEN, pos - PREFIX_COLOR_8BIT_LEN);
-            return _to8bitColor(stoi(colorCode));
+            return _to8bitColor(stoi(colorCode), profile);
         }
     }
 
@@ -50,17 +50,17 @@ Color Ansi::toColor(const std::string& ansi, bool increaseIntensity)
         int colorCode = stoi(ansi.substr(2, pos - 2));
         if (colorCode >= 30 && colorCode <= 37) {
             int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 30 + intensitiyLift);
+            return _to8bitColor(colorCode - 30 + intensitiyLift, profile);
         }
         if (colorCode >= 40 && colorCode <= 47) {
             int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 40 + intensitiyLift);
+            return _to8bitColor(colorCode - 40 + intensitiyLift, profile);
         }
         if (colorCode >= 90 && colorCode <= 97) {
-            return _to8bitColor(colorCode - 90 + 8);
+            return _to8bitColor(colorCode - 90 + 8, profile);
         }
         if (colorCode >= 100 && colorCode <= 107) {
-            return _to8bitColor(colorCode - 100 + 8);
+            return _to8bitColor(colorCode - 100 + 8, profile);
         }
     }
 
@@ -93,28 +93,55 @@ Color Ansi::_to24bitColor(std::string code)
     return FALLBACK_COLOR;
 }
 
-Color Ansi::_to8bitColor(int code)
+Color Ansi::_to8bitColor(int code, Ansi::Profile profile)
 {
-    Color colors[] = {
-        // standard colors
-        Color(0,0,0),       // 00: #000000
-        Color(128,0,0),     // 01: #800000
-        Color(0,128,0),     // 02: #008000
-        Color(128,128,0),   // 03: #808000
-        Color(0,0,128),     // 04: #000080
-        Color(128,0,128),   // 05: #800080
-        Color(0,128,128),   // 06: #008080
-        Color(192,192,192), // 07: #c0c0c0
+    Color colors[2][16] = 
+    {
+        // VGA
+        {
+            // standard colors
+            Color(0,0,0),       // 00: black
+            Color(170,0,0),     // 01: red
+            Color(0,170,0),     // 02: green
+            Color(170,85,0),    // 03: yellow
+            Color(0,0,170),     // 04: blue
+            Color(170,0,170),   // 05: magenta
+            Color(0,170,170),   // 06: cyan
+            Color(170,170,170), // 07: white
 
-        // high-intensity colors
-        Color(128,128,128), // 08: #808080
-        Color(255,0,0),     // 09: #ff0000
-        Color(0,255,0),     // 10: #00ff00
-        Color(255,255,0),   // 11: #ffff00
-        Color(0,0,255),     // 12: #0000ff
-        Color(255,0,255),   // 13: #ff00ff
-        Color(0,255,255),   // 14: #00ffff
-        Color(255,255,255)  // 15: #ffffff
+            // high-intensity colors
+            Color(85,85,85),    // 08: bright black
+            Color(255,85,85),   // 09: bright red
+            Color(85,255,85),   // 10: bright green
+            Color(255,255,85),  // 11: bright yellow
+            Color(85,85,255),   // 12: bright blue
+            Color(255,85,255),  // 13: bright magenta
+            Color(85,255,255),  // 14: bright cyan
+            Color(255,255,255)  // 15: bright white
+        },
+
+        // windows XP
+        {
+            // standard colors
+            Color(0,0,0),       // 00: black
+            Color(128,0,0),     // 01: red
+            Color(0,128,0),     // 02: green
+            Color(128,128,0),   // 03: yellow
+            Color(0,0,128),     // 04: blue
+            Color(128,0,128),   // 05: magenta
+            Color(0,128,128),   // 06: cyan
+            Color(192,192,192), // 07: white
+
+            // high-intensity colors
+            Color(128,128,128), // 08: bright black
+            Color(255,0,0),     // 09: bright red
+            Color(0,255,0),     // 10: bright green
+            Color(255,255,0),   // 11: bright yellow
+            Color(0,0,255),     // 12: bright blue
+            Color(255,0,255),   // 13: bright magenta
+            Color(0,255,255),   // 14: bright cyan
+            Color(255,255,255)  // 15: bright white
+        }
     };
 
     if (code < 0 || code > 255)
@@ -123,7 +150,7 @@ Color Ansi::_to8bitColor(int code)
     }
     if (code < 16)
     {
-        return colors[code];
+        return colors[profile][code];
     }
     if (code > 231)
     {
@@ -167,6 +194,10 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
         return Ansi::Sequence::RESET;
     case 1:
         return Ansi::Sequence::INCREASE_INTENSITY;
+    case 2:
+        return Ansi::Sequence::DECREASED_INTENSITY;
+    case 22:
+        return Ansi::Sequence::NORMAL_INTENSITY;
     case 39:
         return Ansi::Sequence::RESET_FOREGROUND;
     case 49:

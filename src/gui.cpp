@@ -15,6 +15,8 @@ Gui::Gui()
     mouseOver(false),
     redraw(true),
     recalc(true),
+    increaseIntensity(false),
+    colorProfile(Ansi::Profile::VGA),
     screenEdgeSpacing(0),
     lineSpacing(0),
     mouseOverTolerance(0),
@@ -25,6 +27,7 @@ Gui::Gui()
 
     setDefaultBackgroundColor(0, 0, 0, 100);
     setDefaultForgroundColor(255, 255, 255, 200);
+    clearMessages();
 }
 
 Gui::~Gui()
@@ -43,6 +46,11 @@ void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned c
 {
     redraw = true;
     bgColor = Color(r, g, b, a);
+}
+
+void Gui::setColorProfile(Ansi::Profile profile)
+{
+    colorProfile = profile;
 }
 
 void Gui::setMouseOverDimming(const float& dimming)
@@ -84,6 +92,7 @@ void Gui::flush()
 
     if (recalc) {
         // TODO recalculation of individual line positions (or simply reinsert all messages once again?)
+        recalc = false;
     }
 
     bool currentMouseOver = isMouseOver();
@@ -121,6 +130,8 @@ void Gui::flush()
 void Gui::clearMessages() 
 {
     redraw = true;
+    increaseIntensity = false;
+    lastFgColor = "\e[37m";
 
     messageMaxWidth = 0;
     messageY = 0;
@@ -129,7 +140,6 @@ void Gui::clearMessages()
     drawFgCommands.erase(drawFgCommands.begin(), drawFgCommands.end());
     clippingBoxes.clear();
 }
-
 
 void Gui::addMessage(const std::string& message) 
 {
@@ -151,7 +161,6 @@ void Gui::addMessage(const std::string& message)
         int x = calcXforOrientation(w, 0, 0);
         clippingBoxes.emplace_back(ClippingAABB(x, messageY, w, dim.h));
 
-        bool increaseIntensity = false;
         for (auto chunk : chunks) {
             Ansi::Sequence sequence = Ansi::parseControlSequence(chunk);
             switch (sequence)
@@ -168,13 +177,23 @@ void Gui::addMessage(const std::string& message)
                 drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
                 break;
             case Ansi::FOREGROUND_COLOR:
-                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity)));
+                lastFgColor = chunk;
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity, colorProfile)));
                 break;
             case Ansi::BACKGROUND_COLOR:
-                drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity)));
+                drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, false, colorProfile)));
                 break;
             case Ansi::INCREASE_INTENSITY:
                 increaseIntensity = true;
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
+                break;
+            case Ansi::DECREASED_INTENSITY:
+                increaseIntensity = false;
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
+                break;
+            case Ansi::NORMAL_INTENSITY:
+                increaseIntensity = false;
+                drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
                 break;
             case Ansi::NONE:
             {
