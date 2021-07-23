@@ -96,7 +96,7 @@ void Gui::flush()
     }
 
     bool currentMouseOver = isMouseOver();
-    redraw |= mouseOver == currentMouseOver;
+    redraw |= mouseOver != currentMouseOver;
     mouseOver = currentMouseOver;
 
     if (!redraw) {
@@ -105,7 +105,7 @@ void Gui::flush()
 
     window->clear();
 
-    if (w >0 && h > 0) {
+    if (w > 0 && h > 0) {
         window->resize(w, h);
         updateWindowPosition();
 
