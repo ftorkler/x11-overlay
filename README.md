@@ -1,18 +1,28 @@
-<h3 align="center">X11-Overlay</h3>
-<p align="center">
-<img alt="C++" src="https://img.shields.io/badge/C++-Solutions-blue.svg?logo=c%2B%2B"></img>
-<img alt="Build Status" src="https://img.shields.io/github/workflow/status/ftorkler/x11-overlay/CI%20Build?logo=github">
-</p>
+![logo](./docs/logo.png)
 
-# Features
+# x11-overlay
 
-* screen selection for multi-monitor setup
-* colorized text with Ansi Escape Sequences.  
+![C++](https://img.shields.io/badge/C++-Solutions-blue.svg?logo=c%2B%2B)
+![Build Status](https://img.shields.io/github/workflow/status/ftorkler/x11-overlay/CI%20Build?logo=github)
+
+This is a tiny program that displays the content of text files as an overlay on your desktop.  
+Its goal is simplicity, a non-distracting visualization and especially it should not interfere with user interactions targeting the underlying content.
+
+It is designed as a front-end tool to show alarms or the health status of any system. To do so, just write your custom script that generates and updates a text file with the information you want to be displayed. Use this file as input for `x11-overlay` and that's it.
+But of course, it's absolutely not limited to alarming dashboards. Be creative! 
+
+## Features
+
+* Simple and easy to use text input files (WYSIWYG)
+* Don't disturb (not in taskbar nor in task-switcher)
+* Don't interfere (delegate all user interactions to underlying elemets)
+* Screen selection for multi-monitor setup
+* Colorized text with Ansi Escape Sequences.  
 Supported are the well known color formats for 3-4bit, 8bit and 24bit (see [SGR](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters "Select_Graphic_Rendition")).
 
-# Installation
+## Installation
 
-## Dependencies
+### Dependencies
 
 debian/ubuntu:
 
@@ -26,13 +36,13 @@ arc/manjaro:
 $> pacman -S libx11 libxfixes libxrandr libxft freetype2
 ```
 
-## Compile
+### Compile
 
 ```
 $> make && ./bin/run_tests
 ```
 
-# Usage
+## Usage
 
 ```
 usage: overlay [OPTIONS] <INPUT_FILE>
