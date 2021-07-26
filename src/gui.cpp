@@ -85,6 +85,13 @@ void Gui::setLineSpacing(unsigned int spacing)
     lineSpacing = spacing;
 }
 
+void Gui::setMonitorIndex(unsigned int index)
+{
+    redraw = true;
+    recalc = true;
+    window->setActiveMonitor(index);
+}
+
 void Gui::flush()
 {
     int w = messageMaxWidth;

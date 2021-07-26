@@ -48,11 +48,12 @@ $> make && ./bin/run_tests
 usage: overlay [OPTIONS] <INPUT_FILE>
 
 OPTIONS:
+  -d <percent>        how much the window dims on mouse over; defaults to '75'%
+  -e <pixel>          screen edge spacing in pixels; defaults to '0'
+  -h                  prints this help text
+  -l <pixel>          line spacing in pixels; defaults to '0'
+  -m <index>          monitor to use; defaults to '0'
   -o <value>          orientation to align window and lines; defaults to 'NW'
                       possible values are N, NE, E, SE, S, SW, W, NW and CENTER
-  -d <percent>        how much the window dims on mouse over; defaults to '75'%
   -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'
-  -s <pixel>          screen edge spacing in pixels; defaults to '0'
-  -l <pixel>          line spacing in pixels; defaults to '0'
-  -h                  prints this help text
 ```

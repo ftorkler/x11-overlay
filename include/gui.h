@@ -32,6 +32,7 @@ public:
     void setOrientation(Orientation orientation);
     void setScreenEdgeSpacing(unsigned int spacing);
     void setLineSpacing(unsigned int spacing);
+    void setMonitorIndex(unsigned int index);
 
     void flush();
     void clearMessages();

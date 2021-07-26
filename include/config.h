@@ -21,6 +21,7 @@ public:
     int mouseOverTolerance;
     int screenEdgeSpacing;
     int lineSpacing;
+    int monitorIndex;
 
     static Config defaultConfig();
     static Config fromParameters(int argc, char** argv);

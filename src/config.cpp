@@ -11,7 +11,8 @@ Config::Config()
     dimming(INT_MIN),
     mouseOverTolerance(INT_MIN),
     screenEdgeSpacing(INT_MIN),
-    lineSpacing(INT_MIN)
+    lineSpacing(INT_MIN),
+    monitorIndex(INT_MIN)
 {
 }
 
@@ -28,6 +29,7 @@ Config Config::overrideWith(const Config& other)
     if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
     if (other.screenEdgeSpacing != unsetConfig.screenEdgeSpacing) this->screenEdgeSpacing = other.screenEdgeSpacing;
     if (other.lineSpacing != unsetConfig.lineSpacing) this->lineSpacing = other.lineSpacing;
+    if (other.monitorIndex != unsetConfig.monitorIndex) this->monitorIndex = other.monitorIndex;
     return *this;
 }
 
@@ -36,13 +38,14 @@ void Config::exitWithUsage(int exitCode)
     std::cout << "usage: overlay [OPTIONS] <INPUT_FILE>" << std::endl;
     std::cout << std::endl;
     std::cout << "OPTIONS:" << std::endl;
+    std::cout << "  -d <percent>        how much the window dims on mouse over; defaults to '75'%" << std::endl;
+    std::cout << "  -e <pixel>          screen edge spacing in pixels; defaults to '0'" << std::endl;
+    std::cout << "  -h                  prints this help text" << std::endl;
+    std::cout << "  -l <pixel>          line spacing in pixels; defaults to '0'" << std::endl;
+    std::cout << "  -m <index>          monitor to use; defaults to '0'" << std::endl;
     std::cout << "  -o <value>          orientation to align window and lines; defaults to 'NW'" << std::endl;
     std::cout << "                      possible values are N, NE, E, SE, S, SW, W, NW and CENTER" << std::endl;
-    std::cout << "  -d <percent>        how much the window dims on mouse over; defaults to '75'%" << std::endl;
     std::cout << "  -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'" << std::endl;
-    std::cout << "  -s <pixel>          screen edge spacing in pixels; defaults to '0'" << std::endl;
-    std::cout << "  -l <pixel>          line spacing in pixels; defaults to '0'" << std::endl;
-    std::cout << "  -h                  prints this help text" << std::endl;
     exit(exitCode);
 }
 
@@ -55,6 +58,7 @@ Config Config::defaultConfig()
     config.mouseOverTolerance = 0;
     config.screenEdgeSpacing = 0;
     config.lineSpacing = 0;
+    config.monitorIndex = 0;
     return config;
 }
 
@@ -92,27 +96,30 @@ Config Config::fromParameters(int argc, char** argv)
     Config config;
 
     int opt;
-    while((opt = getopt(argc, argv, "-:o:d:t:s:l:h")) != -1)
+    while((opt = getopt(argc, argv, "-:d:e:h:l:m:o:t")) != -1)
     {
         switch(opt)
         {
-            case 'o':
-                config.orientation = assertOrientationParameter(opt, optarg);
-                break;
             case 'd':
                 config.dimming = assertIntParameter(opt, optarg);
                 break;
-            case 't':
-                config.mouseOverTolerance = assertIntParameter(opt, optarg);
-                break;
-            case 's':
+            case 'e':
                 config.screenEdgeSpacing = assertIntParameter(opt, optarg);
+                break;
+            case 'h':
+                argHelp = true;
                 break;
             case 'l':
                 config.lineSpacing = assertIntParameter(opt, optarg);
                 break;
-            case 'h':
-                argHelp = true;
+            case 'm':
+                config.monitorIndex = assertIntParameter(opt, optarg);
+                break;
+            case 'o':
+                config.orientation = assertOrientationParameter(opt, optarg);
+                break;
+            case 't':
+                config.mouseOverTolerance = assertIntParameter(opt, optarg);
                 break;
             case 1:
                 config.inputFile = optarg;

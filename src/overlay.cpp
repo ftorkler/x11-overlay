@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     gui->setMouseOverTolerance(config.mouseOverTolerance);
     gui->setScreenEdgeSpacing(config.screenEdgeSpacing);
     gui->setLineSpacing(config.lineSpacing);
+    gui->setMonitorIndex(config.monitorIndex);
 
     while (running)
     {
