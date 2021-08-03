@@ -46,7 +46,6 @@ private:
     Window rootWindow;
     Window window;
     XVisualInfo visualInfo;
-    XSetWindowAttributes attributes;
     XRRMonitorInfo monitor;
 
     XEvent event;

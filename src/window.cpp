@@ -37,11 +37,13 @@ void X11Window::createWindowContext()
 
     XMatchVisualInfo(display, screen, 32, TrueColor, &visualInfo);
 
+    XSetWindowAttributes attributes;
     attributes.colormap = XCreateColormap(display, rootWindow, visualInfo.visual, AllocNone);
-    // attributes.background_pixel = createColor(255,255,255,64).pixel;
+    attributes.border_pixel = BlackPixel(display, screen);
+    attributes.background_pixel = BlackPixel(display, screen);
     attributes.override_redirect = true;
 
-    unsigned long attrMask = CWColormap|CWBorderPixel|CWBackPixel|CWEventMask|CWWinGravity|CWBitGravity|CWSaveUnder|CWDontPropagate|CWOverrideRedirect;
+    unsigned long attrMask = CWColormap | CWBorderPixel | CWBackPixel | CWOverrideRedirect;
     window = XCreateWindow(display, rootWindow, x, y, width, height, 0, visualInfo.depth, InputOutput, visualInfo.visual, attrMask, &attributes);
 
     XserverRegion region = XFixesCreateRegion(display, NULL, 0);
@@ -101,7 +103,8 @@ void X11Window::resize(unsigned int width, unsigned int height)
     }
 }
 
-X11Canvas* X11Window::createCanvas() const{
+X11Canvas* X11Window::createCanvas() const 
+{
     return new X11Canvas(display, window, visualInfo.visual, screen);
 }
 
