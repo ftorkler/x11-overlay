@@ -143,8 +143,8 @@ void Gui::clearMessages()
     messageMaxWidth = 0;
     messageY = 0;
 
-    drawBgCommands.erase(drawBgCommands.begin(), drawBgCommands.end());
-    drawFgCommands.erase(drawFgCommands.begin(), drawFgCommands.end());
+    drawBgCommands.clear();
+    drawFgCommands.clear();
     clippingBoxes.clear();
 }
 

@@ -1,0 +1,26 @@
+InputFile=/some/inputFile.txt
+
+[Position]
+MonitorIndex=1
+Orientation=SE
+ScreenEdgeSpacing=10
+LineSpacing=20
+
+[MouseOver]
+Tolerance=0
+Dimming=75
+
+[Font]
+Name=Noto Sans
+AntiAliasing=true
+Size=10
+
+[Theme]
+ForegroundColor=128,128,128
+ForegroundAlpha=255
+BackgroundColor=0,0,0
+BackgroundAlpha=100
+
+[Interval]
+CheckFile=1000
+CheckGui=50

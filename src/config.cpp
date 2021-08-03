@@ -1,18 +1,21 @@
 #include "config.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <limits.h>
 #include <unistd.h>
+#include <pwd.h>
 
 Config::Config()
 :
     inputFile(),
+    monitorIndex(INT_MIN),
     orientation(Gui::Orientation::NONE),
-    dimming(INT_MIN),
-    mouseOverTolerance(INT_MIN),
     screenEdgeSpacing(INT_MIN),
     lineSpacing(INT_MIN),
-    monitorIndex(INT_MIN)
+    mouseOverTolerance(INT_MIN),
+    mouseOverDimming(INT_MIN)
 {
 }
 
@@ -25,7 +28,7 @@ Config Config::overrideWith(const Config& other)
     Config unsetConfig;
     if (other.inputFile != unsetConfig.inputFile) this->inputFile = other.inputFile;
     if (other.orientation != unsetConfig.orientation) this->orientation = other.orientation;
-    if (other.dimming != unsetConfig.dimming) this->dimming = other.dimming;
+    if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
     if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
     if (other.screenEdgeSpacing != unsetConfig.screenEdgeSpacing) this->screenEdgeSpacing = other.screenEdgeSpacing;
     if (other.lineSpacing != unsetConfig.lineSpacing) this->lineSpacing = other.lineSpacing;
@@ -54,7 +57,7 @@ Config Config::defaultConfig()
     Config config;
     config.inputFile = "",
     config.orientation = Gui::Orientation::NW;
-    config.dimming = 75;
+    config.mouseOverDimming = 75;
     config.mouseOverTolerance = 0;
     config.screenEdgeSpacing = 0;
     config.lineSpacing = 0;
@@ -101,7 +104,7 @@ Config Config::fromParameters(int argc, char** argv)
         switch(opt)
         {
             case 'd':
-                config.dimming = assertIntParameter(opt, optarg);
+                config.mouseOverDimming = assertIntParameter(opt, optarg);
                 break;
             case 'e':
                 config.screenEdgeSpacing = assertIntParameter(opt, optarg);
@@ -136,12 +139,6 @@ Config Config::fromParameters(int argc, char** argv)
         }
     }
 
-    if (config.inputFile.empty()) {
-        std::cout << "ERROR: parameter 'INPUT_FILE' needs a value" << std::endl;
-        std::cout << std::endl;
-        exitWithUsage(1);
-    }
-
     if (argHelp) {
         exitWithUsage(0);
     }
@@ -149,3 +146,133 @@ Config Config::fromParameters(int argc, char** argv)
     return config;
 }
 
+Config Config::fromFile(const std::string& filename, bool suppressWarning)
+{
+    Config config = defaultConfig();
+
+    std::ifstream filein = std::ifstream(filename);
+    std::string section;
+    int i = 0;
+    for (std::string line; std::getline(filein, line); ++i) {
+        if (!parseEmptyLine(line) &&
+            !parseCommentLine(line) &&
+            !parseSectionLine(line, section) &&
+            !parseKeyValueLine(line, section, config))
+        {
+            std::cout << "WARN: config line:" << i << " is not a comment, section nor a key-value pair: '" << line << "'" << std::endl;
+        }
+    }
+    filein.close();
+
+    if (i == 0 && !suppressWarning) {
+        std::cout << "WARN: no (valid) config file found at '" << filename << "'" << std::endl;
+    }
+
+    return config;
+}
+
+bool Config::parseEmptyLine(std::string line)
+{
+    trim(line);
+    return line.empty();
+}
+
+bool Config::parseCommentLine(std::string line)
+{
+    trim(line);
+    return !line.empty() && (line[0] == ';' || line[0] == '#');
+}
+
+bool Config::parseSectionLine(std::string line, std::string& section)
+{
+    trim(line);
+    if (line.size() <= 3 || line[0] != '[' || line[line.size()-1] != ']') {
+        return false;
+    }
+    section.clear();
+    section.append(line.substr(1, line.size()-2));
+    trim(section);
+    return true;
+}
+
+bool Config::parseKeyValueLine(std::string line, std::string section, Config& config)
+{
+    std::istringstream iss(line);
+    std::string key;
+    std::string value;
+    if (std::getline(iss, key, '=') && std::getline(iss, value)) {
+        trim(key);
+        trim(value);
+
+        if (key.empty() || value.empty()) {
+            return false;
+        }
+
+        try {
+            if (section == "")
+            {
+                if (key == "InputFile") {
+                    config.inputFile = value;
+                    return true;
+                }
+            }
+            else if (section == "Position") 
+            {
+                if (key == "MonitorIndex") {
+                    config.monitorIndex = std::stoi(value);
+                    return true;
+                }
+                if (key == "LineSpacing") {
+                    config.lineSpacing = std::stoi(value);
+                    return true;
+                }
+                if (key == "ScreenEdgeSpacing") {
+                    config.screenEdgeSpacing = std::stoi(value);
+                    return true;
+                }
+                if (key == "Orientation") {
+                    Gui::Orientation orientation = Gui::orientationFromString(value);
+                    if (orientation == Gui::Orientation::NONE) {
+                        throw std::runtime_error("invalid orientation");
+                    }
+                    config.orientation = orientation;
+                    return true;
+                }
+            }
+            else if (section == "MouseOver") 
+            {
+                if (key == "Tolerance") {
+                    config.mouseOverTolerance = std::stoi(value);
+                    return true;
+                }
+                if (key == "Dimming") {
+                    config.mouseOverDimming = std::stoi(value);
+                    return true;
+                }
+            }
+        }
+        catch (std::exception const&) {
+            std::cout << "could not parse config file value '" << value << "' for key '" << key << "' (ignored)" << std::endl;
+        }
+    }
+    return false;
+}
+
+std::string& Config::trim(std::string& str)
+{
+    const std::string CHARS_TO_TRIM = " \n\r\t";
+    str.erase(0, str.find_first_not_of(CHARS_TO_TRIM));
+    str.erase(str.find_last_not_of(CHARS_TO_TRIM) + 1);
+    return str;
+}
+
+std::string Config::getDefaultConfigFilePath()
+{
+    const char* home;
+    if ((home = getenv("HOME")) != nullptr ||
+        (home = getpwuid(getuid())->pw_dir) != nullptr) 
+    {
+        return std::string(home) + "/.config/x11-overlayrc";
+    }
+    return "";
+}

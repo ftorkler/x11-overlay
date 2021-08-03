@@ -46,7 +46,7 @@ void catchSigterm()
 
 void checkInputFile(const std::string& filename)
 {
-    gui->clearMessages();      
+    gui->clearMessages();
     
     std::ifstream filein(filename, std::ifstream::in);
     int i = 0;
@@ -58,13 +58,21 @@ void checkInputFile(const std::string& filename)
 
 int main(int argc, char *argv[])
 {
-    Config config = Config::defaultConfig().overrideWith(Config::fromParameters(argc, argv));
-
     catchSigterm();
+
+    Config config = Config::defaultConfig()
+        .overrideWith(Config::fromFile(Config::getDefaultConfigFilePath(), true))
+        .overrideWith(Config::fromParameters(argc, argv));
+
+    if (config.inputFile.empty()) {
+        std::cout << "ERROR: parameter 'INPUT_FILE' needs a value" << std::endl;
+        std::cout << std::endl;
+        Config::exitWithUsage(1);
+    }
 
     gui = new Gui();
     gui->setOrientation(config.orientation);
-    gui->setMouseOverDimming(config.dimming / 100.0f);
+    gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
     gui->setMouseOverTolerance(config.mouseOverTolerance);
     gui->setScreenEdgeSpacing(config.screenEdgeSpacing);
     gui->setLineSpacing(config.lineSpacing);

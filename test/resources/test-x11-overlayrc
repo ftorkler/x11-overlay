@@ -1,0 +1,13 @@
+;this is a config file for tests
+
+InputFile=/some/inputFile.txt
+
+[Position]
+MonitorIndex=1
+Orientation=SE
+ScreenEdgeSpacing=10
+LineSpacing=20
+
+[MouseOver]
+Tolerance=0
+Dimming=75

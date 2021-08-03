@@ -15,16 +15,29 @@ public:
 
     Config overrideWith(const Config& other);
 
+    // main
     std::string inputFile;
+    // positon
+    int monitorIndex;
     Gui::Orientation orientation;
-    int dimming;
-    int mouseOverTolerance;
     int screenEdgeSpacing;
     int lineSpacing;
-    int monitorIndex;
+    // mouse over
+    int mouseOverTolerance;
+    int mouseOverDimming;
 
     static Config defaultConfig();
     static Config fromParameters(int argc, char** argv);
+    static Config fromFile(const std::string& filename, bool suppressWarning = false);
+
+    static std::string getDefaultConfigFilePath();
+    static void exitWithUsage(int exitCode);
+
+    // visible for testing
+    static bool parseEmptyLine(std::string line);
+    static bool parseCommentLine(std::string line);
+    static bool parseSectionLine(std::string line, std::string& section);
+    static bool parseKeyValueLine(std::string line, std::string section, Config& config);
 
 private:
 
@@ -32,7 +45,7 @@ private:
 
     static Gui::Orientation assertOrientationParameter(char c, const std::string& param);
     static int assertIntParameter(char c, const std::string& param);
-    static void exitWithUsage(int exitCode);
+    static std::string& trim(std::string& str);
 
 };
 
