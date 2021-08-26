@@ -9,7 +9,9 @@
 
 Config::Config()
 :
-    inputFile(),
+    configFile(""),
+    verbose(false),
+    inputFile(""),
     monitorIndex(INT_MIN),
     orientation(Gui::Orientation::NONE),
     screenEdgeSpacing(INT_MIN),
@@ -26,6 +28,8 @@ Config::~Config()
 Config Config::overrideWith(const Config& other)
 {
     Config unsetConfig;
+    if (other.configFile != unsetConfig.configFile) this->configFile = other.configFile;
+    if (other.verbose != unsetConfig.verbose) this->verbose = other.verbose;
     if (other.inputFile != unsetConfig.inputFile) this->inputFile = other.inputFile;
     if (other.orientation != unsetConfig.orientation) this->orientation = other.orientation;
     if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
@@ -36,11 +40,31 @@ Config Config::overrideWith(const Config& other)
     return *this;
 }
 
+void Config::print(std::ostream& os) const
+{
+    os << "default config file path is '" << getDefaultConfigFilePath() << "'" << std::endl;
+    os << "---- resulting config ----" << std::endl;
+    os << "InputFile=" << inputFile << std::endl;
+    os << std::endl;
+    os << "[Position]"<< std::endl;
+    os << "MonitorIndex=" << monitorIndex << std::endl;
+    os << "Orientation=" << Gui::orientationToString(orientation) << std::endl;
+    os << "ScreenEdgeSpacing=" << screenEdgeSpacing << std::endl;
+    os << "LineSpacing=" << lineSpacing << std::endl;
+    os << std::endl;
+    os << "[MouseOver]"<< std::endl;
+    os << "Tolerance=" << mouseOverTolerance << std::endl;
+    os << "Dimming=" << mouseOverDimming << std::endl;
+
+    os << "--------------------------" << std::endl;
+}
+
 void Config::exitWithUsage(int exitCode)
 {
     std::cout << "usage: overlay [OPTIONS] <INPUT_FILE>" << std::endl;
     std::cout << std::endl;
     std::cout << "OPTIONS:" << std::endl;
+    std::cout << "  -c <file>           file path to read configuration from" << std::endl;
     std::cout << "  -d <percent>        how much the window dims on mouse over; defaults to '75'%" << std::endl;
     std::cout << "  -e <pixel>          screen edge spacing in pixels; defaults to '0'" << std::endl;
     std::cout << "  -h                  prints this help text" << std::endl;
@@ -49,12 +73,15 @@ void Config::exitWithUsage(int exitCode)
     std::cout << "  -o <value>          orientation to align window and lines; defaults to 'NW'" << std::endl;
     std::cout << "                      possible values are N, NE, E, SE, S, SW, W, NW and CENTER" << std::endl;
     std::cout << "  -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'" << std::endl;
+    std::cout << "  -v                  be verbose and print some debug output" << std::endl;
     exit(exitCode);
 }
 
 Config Config::defaultConfig()
 {
     Config config;
+    config.configFile = "",
+    config.verbose = false,
     config.inputFile = "",
     config.orientation = Gui::Orientation::NW;
     config.mouseOverDimming = 75;
@@ -99,10 +126,13 @@ Config Config::fromParameters(int argc, char** argv)
     Config config;
 
     int opt;
-    while((opt = getopt(argc, argv, "-:d:e:h:l:m:o:t")) != -1)
+    while((opt = getopt(argc, argv, "-c:d:e:hl:m:o:t:v")) != -1)
     {
         switch(opt)
         {
+            case 'c':
+                config.configFile = optarg;
+                break;
             case 'd':
                 config.mouseOverDimming = assertIntParameter(opt, optarg);
                 break;
@@ -123,6 +153,9 @@ Config Config::fromParameters(int argc, char** argv)
                 break;
             case 't':
                 config.mouseOverTolerance = assertIntParameter(opt, optarg);
+                break;
+            case 'v':
+                config.verbose = true;
                 break;
             case 1:
                 config.inputFile = optarg;
@@ -148,7 +181,7 @@ Config Config::fromParameters(int argc, char** argv)
 
 Config Config::fromFile(const std::string& filename, bool suppressWarning)
 {
-    Config config = defaultConfig();
+    Config config;
 
     std::ifstream filein = std::ifstream(filename);
     std::string section;

@@ -56,19 +56,35 @@ void checkInputFile(const std::string& filename)
     filein.close();
 }
 
-int main(int argc, char *argv[])
+Config readConfig(int argc, char* argv[])
 {
-    catchSigterm();
+    Config configFromParameters = Config::fromParameters(argc, argv);   
+    Config configFromFile = configFromParameters.configFile != "" 
+        ? Config::fromFile(configFromParameters.configFile, false) 
+        : Config::fromFile(Config::getDefaultConfigFilePath(), true);
 
     Config config = Config::defaultConfig()
-        .overrideWith(Config::fromFile(Config::getDefaultConfigFilePath(), true))
-        .overrideWith(Config::fromParameters(argc, argv));
+        .overrideWith(configFromFile)
+        .overrideWith(configFromParameters);
 
     if (config.inputFile.empty()) {
         std::cout << "ERROR: parameter 'INPUT_FILE' needs a value" << std::endl;
         std::cout << std::endl;
         Config::exitWithUsage(1);
     }
+
+    if (config.verbose) {
+        config.print(std::cout);
+    }
+
+    return config;
+}
+
+int main(int argc, char* argv[])
+{
+    catchSigterm();
+
+    Config config = readConfig(argc, argv);
 
     gui = new Gui();
     gui->setOrientation(config.orientation);

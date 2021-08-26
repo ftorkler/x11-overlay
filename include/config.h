@@ -3,6 +3,7 @@
 #define OVERLAY_CONFIG_H
 
 #include <string>
+#include <ostream>
 
 #include "gui.h"
 
@@ -14,6 +15,10 @@ public:
     ~Config();
 
     Config overrideWith(const Config& other);
+    void print(std::ostream& os) const;
+
+    std::string configFile;
+    bool verbose;
 
     // main
     std::string inputFile;
