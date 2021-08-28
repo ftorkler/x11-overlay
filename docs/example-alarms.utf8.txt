@@ -1,0 +1,6 @@
+[ srv-bertram ]
+  CRIT: Disk Space Usage (96%)
+  WARN: Memory Usage (82%)
+
+[ srv-gerda ]
+  CRIT: Load Average (0.7)

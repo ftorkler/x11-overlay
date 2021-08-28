@@ -11,6 +11,11 @@ Its goal is simplicity, a non-distracting visualization and especially it should
 It is designed as a front-end tool to show alarms or the health status of any system. To do so, just write your custom script that generates and updates a text file with the information you want to be displayed. Use this file as input for `x11-overlay` and that's it.
 But of course, it's absolutely not limited to alarming dashboards. Be creative! 
 
+<p float="left">
+  <a href="https://github.com/ftorkler/x11-overlay/raw/main/docs/scrsht-01-orientations.png"><img src="./docs/scrsht-01-orientations-prv.png" width="415" /></a>
+  <a href="#"><img src="./docs/scrsht-02-dimming.gif" width="415" /></a>
+</p>
+
 ## Features
 
 * Simple and easy to use text input files (WYSIWYG)
@@ -48,6 +53,7 @@ $> make && ./bin/run_tests
 usage: overlay [OPTIONS] <INPUT_FILE>
 
 OPTIONS:
+  -c <file>           file path to read configuration from
   -d <percent>        how much the window dims on mouse over; defaults to '75'%
   -e <pixel>          screen edge spacing in pixels; defaults to '0'
   -h                  prints this help text
@@ -56,4 +62,5 @@ OPTIONS:
   -o <value>          orientation to align window and lines; defaults to 'NW'
                       possible values are N, NE, E, SE, S, SW, W, NW and CENTER
   -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'
+  -v                  be verbose and print some debug output
 ```
