@@ -34,15 +34,16 @@ public:
     static Profile profileFromString(const std::string& input);
 
     static Color toColor(const std::string &ansi, bool increaseIntensity = false, Profile profile = Profile::XP);
-    // visible for testing
-    static Color _to24bitColor(std::string code);
-    // visible for testing
-    static Color _to8bitColor(int code, Profile profile = Profile::XP);
-
+ 
     static Sequence parseControlSequence(const std::string& text);
 
     static std::vector<std::string> split(const std::string text);
-    // visible for testing
+
+ private:
+
+    static Color _to24bitColor(std::string code);
+    static Color _to8bitColor(int code, Profile profile = Profile::XP);
+
     static void subsplit(const std::string& text, std::vector<std::string>* result);
 
 };

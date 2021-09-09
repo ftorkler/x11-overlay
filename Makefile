@@ -31,14 +31,14 @@ $(EXE): $(OBJ_DIR)/overlay.o $(OBJ) | $(BIN_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) -I3rdparty/acutest/include -DTEST_NO_MAIN $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
 $(TEST_EXE): $(OBJ_DIR)/test.o ${TEST_OBJ} ${OBJ} | $(BIN_DIR)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
+$(OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) -fno-access-control -I3rdparty/acutest/include -DTEST_NO_MAIN $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
 $(OBJ_DIR)/test.o: $(TEST_SRC_DIR)/test.cpp | $(OBJ_DIR)
-	$(CXX) -I3rdparty/acutest/include $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CXX) -fno-access-control -I3rdparty/acutest/include $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN_DIR) $(OBJ_DIR):
 	@mkdir -p $@
