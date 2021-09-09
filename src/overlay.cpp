@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
     Config config = readConfig(argc, argv);
 
     gui = new Gui();
+    gui->setColorProfile(config.colorProfile);
     gui->setOrientation(config.orientation);
     gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
     gui->setMouseOverTolerance(config.mouseOverTolerance);

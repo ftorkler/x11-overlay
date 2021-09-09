@@ -61,6 +61,7 @@ OPTIONS:
   -m <index>          monitor to use; defaults to '0'
   -o <value>          orientation to align window and lines; defaults to 'NW'
                       possible values are N, NE, E, SE, S, SW, W, NW and CENTER
+  -p <value>          profile for ansi colors; values are VGA or XP
   -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'
   -v                  be verbose and print some debug output
 ```

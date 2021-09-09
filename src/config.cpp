@@ -12,6 +12,7 @@ Config::Config()
     configFile(""),
     verbose(false),
     inputFile(""),
+    colorProfile(Ansi::Profile::VGA),
     monitorIndex(INT_MIN),
     orientation(Gui::Orientation::NONE),
     screenEdgeSpacing(INT_MIN),
@@ -31,6 +32,7 @@ Config Config::overrideWith(const Config& other)
     if (other.configFile != unsetConfig.configFile) this->configFile = other.configFile;
     if (other.verbose != unsetConfig.verbose) this->verbose = other.verbose;
     if (other.inputFile != unsetConfig.inputFile) this->inputFile = other.inputFile;
+    if (other.colorProfile != unsetConfig.colorProfile) this->colorProfile = other.colorProfile;
     if (other.orientation != unsetConfig.orientation) this->orientation = other.orientation;
     if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
     if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
@@ -44,7 +46,10 @@ void Config::print(std::ostream& os) const
 {
     os << "default config file path is '" << getDefaultConfigFilePath() << "'" << std::endl;
     os << "---- resulting config ----" << std::endl;
-    os << "InputFile=" << inputFile << std::endl;
+    os << "InputFile=" << inputFile << std::endl;    
+    os << std::endl;
+    os << "[Appearance]"<< std::endl;
+    os << "ColorProfile=" << Ansi::profileToString(colorProfile) << std::endl;
     os << std::endl;
     os << "[Position]"<< std::endl;
     os << "MonitorIndex=" << monitorIndex << std::endl;
@@ -72,6 +77,7 @@ void Config::exitWithUsage(int exitCode)
     std::cout << "  -m <index>          monitor to use; defaults to '0'" << std::endl;
     std::cout << "  -o <value>          orientation to align window and lines; defaults to 'NW'" << std::endl;
     std::cout << "                      possible values are N, NE, E, SE, S, SW, W, NW and CENTER" << std::endl;
+    std::cout << "  -p <value>          profile for ansi colors; values are VGA or XP" << std::endl;
     std::cout << "  -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'" << std::endl;
     std::cout << "  -v                  be verbose and print some debug output" << std::endl;
     exit(exitCode);
@@ -83,6 +89,7 @@ Config Config::defaultConfig()
     config.configFile = "",
     config.verbose = false,
     config.inputFile = "",
+    config.colorProfile = Ansi::Profile::VGA;
     config.orientation = Gui::Orientation::NW;
     config.mouseOverDimming = 75;
     config.mouseOverTolerance = 0;
@@ -90,6 +97,16 @@ Config Config::defaultConfig()
     config.lineSpacing = 0;
     config.monitorIndex = 0;
     return config;
+}
+
+Ansi::Profile Config::assertProfileParameter(char c, const std::string& param)
+{
+    Ansi::Profile profile = Ansi::profileFromString(optarg);
+    if (profile == Ansi::Profile::NONE) {
+        std::cout << "ERROR: option '" << c << "' has invalid value: " << optarg << "; must be [VGA,XP]"<< std::endl;
+        exit(1);
+    }
+    return profile;
 }
 
 Gui::Orientation Config::assertOrientationParameter(char c, const std::string& param)
@@ -126,7 +143,7 @@ Config Config::fromParameters(int argc, char** argv)
     Config config;
 
     int opt;
-    while((opt = getopt(argc, argv, "-c:d:e:hl:m:o:t:v")) != -1)
+    while((opt = getopt(argc, argv, "-c:d:e:hl:m:o:p:t:v")) != -1)
     {
         switch(opt)
         {
@@ -150,6 +167,9 @@ Config Config::fromParameters(int argc, char** argv)
                 break;
             case 'o':
                 config.orientation = assertOrientationParameter(opt, optarg);
+                break;
+            case 'p':
+                config.colorProfile = assertProfileParameter(opt, optarg);
                 break;
             case 't':
                 config.mouseOverTolerance = assertIntParameter(opt, optarg);
@@ -246,6 +266,17 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
             {
                 if (key == "InputFile") {
                     config.inputFile = value;
+                    return true;
+                }
+            }
+            else if (section == "Appearance") 
+            {
+                if (key == "ColorProfile") {
+                    Ansi::Profile profile = Ansi::profileFromString(value);
+                    if (profile == Ansi::Profile::NONE) {
+                        throw std::runtime_error("invalid profile");
+                    }
+                    config.colorProfile = profile;
                     return true;
                 }
             }

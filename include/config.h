@@ -5,6 +5,7 @@
 #include <string>
 #include <ostream>
 
+#include "ansi.h"
 #include "gui.h"
 
 class Config 
@@ -22,6 +23,8 @@ public:
 
     // main
     std::string inputFile;
+    // appearance
+    Ansi::Profile colorProfile;
     // positon
     int monitorIndex;
     Gui::Orientation orientation;
@@ -48,6 +51,7 @@ private:
 
     Config();
 
+    static Ansi::Profile assertProfileParameter(char c, const std::string& param);
     static Gui::Orientation assertOrientationParameter(char c, const std::string& param);
     static int assertIntParameter(char c, const std::string& param);
     static std::string& trim(std::string& str);

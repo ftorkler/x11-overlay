@@ -11,7 +11,7 @@ class Ansi
 
 public:
 
-    enum Sequence {
+    enum class Sequence {
         NONE = 0,
         FOREGROUND_COLOR,
         BACKGROUND_COLOR,
@@ -26,14 +26,18 @@ public:
 
     enum Profile {
         VGA = 0,
-        XP
+        XP,
+        NONE
     };
 
-    static Color toColor(const std::string &ansi, bool increaseIntensity = false, Profile profile = XP);
+    static std::string profileToString(Profile profile);
+    static Profile profileFromString(const std::string& input);
+
+    static Color toColor(const std::string &ansi, bool increaseIntensity = false, Profile profile = Profile::XP);
     // visible for testing
     static Color _to24bitColor(std::string code);
     // visible for testing
-    static Color _to8bitColor(int code, Profile profile = XP);
+    static Color _to8bitColor(int code, Profile profile = Profile::XP);
 
     static Sequence parseControlSequence(const std::string& text);
 

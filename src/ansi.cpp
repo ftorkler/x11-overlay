@@ -185,23 +185,23 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
     }
 
     if (code.size() > 3) {
-        return UNKNOWN;
+        return Sequence::UNKNOWN;
     }
 
     switch (stoi(code))
     {
     case 0:
-        return Ansi::Sequence::RESET;
+        return Sequence::RESET;
     case 1:
-        return Ansi::Sequence::INCREASE_INTENSITY;
+        return Sequence::INCREASE_INTENSITY;
     case 2:
-        return Ansi::Sequence::DECREASED_INTENSITY;
+        return Sequence::DECREASED_INTENSITY;
     case 22:
-        return Ansi::Sequence::NORMAL_INTENSITY;
+        return Sequence::NORMAL_INTENSITY;
     case 39:
-        return Ansi::Sequence::RESET_FOREGROUND;
+        return Sequence::RESET_FOREGROUND;
     case 49:
-        return Ansi::Sequence::RESET_BACKGROUND;
+        return Sequence::RESET_BACKGROUND;
     case 30:
     case 31:
     case 32:
@@ -220,7 +220,7 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
     case 96:
     case 97:
     case 98:
-        return Ansi::Sequence::FOREGROUND_COLOR;
+        return Sequence::FOREGROUND_COLOR;
     case 40:
     case 41:
     case 42:
@@ -239,7 +239,7 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
     case 106:
     case 107:
     case 108:
-        return Ansi::Sequence::BACKGROUND_COLOR;
+        return Sequence::BACKGROUND_COLOR;
     default:
         return Sequence::UNKNOWN;
     }
@@ -314,4 +314,24 @@ void Ansi::subsplit(const std::string& text, std::vector<std::string>* result) {
             result->emplace_back(sequence.str());
         } 
     }
+}
+
+std::string Ansi::profileToString(Profile profile)
+{
+    switch (profile)
+    {
+        case Profile::VGA: return "VGA";
+        case Profile::XP: return "XP";
+        default: return "";
+    }
+}
+
+Ansi::Profile Ansi::profileFromString(const std::string& input)
+{
+    for (int profile=Profile::VGA; profile<Profile::NONE; ++profile) {
+        if (input == profileToString(static_cast<Profile>(profile))) {
+            return static_cast<Profile>(profile);
+        }
+    }
+    return Profile::NONE;
 }

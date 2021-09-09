@@ -9,7 +9,7 @@
 
 Gui::Gui()
 :
-    orientation(NW),
+    orientation(Orientation::NW),
     messageY(0), 
     messageMaxWidth(0),
     mouseOver(false),
@@ -172,37 +172,37 @@ void Gui::addMessage(const std::string& message)
             Ansi::Sequence sequence = Ansi::parseControlSequence(chunk);
             switch (sequence)
             {
-            case Ansi::RESET:
+            case Ansi::Sequence::RESET:
                 increaseIntensity = false;
                 drawFgCommands.emplace_back(new DrawColorCmd(fgColor));
                 drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
                 break;
-            case Ansi::RESET_FOREGROUND:
+            case Ansi::Sequence::RESET_FOREGROUND:
                 drawFgCommands.emplace_back(new DrawColorCmd(fgColor));
                 break;
-            case Ansi::RESET_BACKGROUND:
+            case Ansi::Sequence::RESET_BACKGROUND:
                 drawBgCommands.emplace_back(new DrawColorCmd(bgColor));
                 break;
-            case Ansi::FOREGROUND_COLOR:
+            case Ansi::Sequence::FOREGROUND_COLOR:
                 lastFgColor = chunk;
                 drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, increaseIntensity, colorProfile)));
                 break;
-            case Ansi::BACKGROUND_COLOR:
+            case Ansi::Sequence::BACKGROUND_COLOR:
                 drawBgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(chunk, false, colorProfile)));
                 break;
-            case Ansi::INCREASE_INTENSITY:
+            case Ansi::Sequence::INCREASE_INTENSITY:
                 increaseIntensity = true;
                 drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
                 break;
-            case Ansi::DECREASED_INTENSITY:
+            case Ansi::Sequence::DECREASED_INTENSITY:
                 increaseIntensity = false;
                 drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
                 break;
-            case Ansi::NORMAL_INTENSITY:
+            case Ansi::Sequence::NORMAL_INTENSITY:
                 increaseIntensity = false;
                 drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
                 break;
-            case Ansi::NONE:
+            case Ansi::Sequence::NONE:
             {
                 int chunkW = canvas->getStringDimension(chunk).w;
                 drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, chunkW, dim.h));
@@ -225,11 +225,17 @@ void Gui::addMessage(const std::string& message)
 
 std::string Gui::trimForOrientation(const std::string& text) const
 {
-    if (orientation != NW && orientation != W && orientation != SW) {
+    if (orientation != Orientation::NW && 
+        orientation != Orientation::W && 
+        orientation != Orientation::SW) 
+    {
         size_t start = text.find_first_not_of(" ");
         std::string mutableText = (start == std::string::npos) ? "" : text.substr(start);
 
-        if (orientation == NE || orientation == E || orientation == SE) {
+        if (orientation == Orientation::NE || 
+            orientation == Orientation::E || 
+            orientation == Orientation::SE) 
+        {
             for (int i=0; i<(int)start; ++i) {
                 mutableText.append(" ");
             }
@@ -270,18 +276,18 @@ bool Gui::isMouseOver() const
 int Gui::calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const
 {
     switch (orientation) {
-        case NW:
-        case W:
-        case SW:
+        case Orientation::NW:
+        case Orientation::W:
+        case Orientation::SW:
         default:
             return spacing;
-        case N:
-        case CENTER:
-        case S:
+        case Orientation::N:
+        case Orientation::CENTER:
+        case Orientation::S:
             return outerWidth / 2 - innerWidth / 2;
-        case NE:
-        case E:
-        case SE:
+        case Orientation::NE:
+        case Orientation::E:
+        case Orientation::SE:
             return outerWidth - innerWidth - spacing;
     }
 }
@@ -289,18 +295,18 @@ int Gui::calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, u
 int Gui::calcYforOrientation(unsigned int innerHeight, unsigned outerHeight, unsigned int spacing) const
 {
     switch (orientation) {
-        case NW:
-        case N:
-        case NE:
+        case Orientation::NW:
+        case Orientation::N:
+        case Orientation::NE:
         default:
             return spacing;
-        case W:
-        case CENTER:
-        case E:
+        case Orientation::W:
+        case Orientation::CENTER:
+        case Orientation::E:
             return outerHeight / 2 - innerHeight / 2;
-        case SW:
-        case S:
-        case SE:
+        case Orientation::SW:
+        case Orientation::S:
+        case Orientation::SE:
             return outerHeight - innerHeight - spacing;
     }
 }
@@ -316,22 +322,22 @@ std::string Gui::orientationToString(Orientation orientation)
 {
     switch (orientation)
     {
-        case N: return "N";
-        case NE: return "NE";
-        case E: return "E";
-        case SE: return "SE";
-        case S: return "S";
-        case SW: return "SW";
-        case W: return "W";
-        case NW: return "NW";
-        case CENTER: return "CENTER";
+        case Gui::Orientation::N: return "N";
+        case Gui::Orientation::NE: return "NE";
+        case Gui::Orientation::E: return "E";
+        case Gui::Orientation::SE: return "SE";
+        case Gui::Orientation::S: return "S";
+        case Gui::Orientation::SW: return "SW";
+        case Gui::Orientation::W: return "W";
+        case Gui::Orientation::NW: return "NW";
+        case Gui::Orientation::CENTER: return "CENTER";
         default: return "";
     }
 }
 
 Gui::Orientation Gui::orientationFromString(const std::string& input)
 {
-    for (int orientation=N; orientation<NONE; ++orientation) {
+    for (int orientation=Orientation::N; orientation<Orientation::NONE; ++orientation) {
         if (input == orientationToString(static_cast<Orientation>(orientation))) {
             return static_cast<Orientation>(orientation);
         }
