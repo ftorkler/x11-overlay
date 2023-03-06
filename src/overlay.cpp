@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
 
     gui = new Gui();
     gui->setColorProfile(config.colorProfile);
+    gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
     gui->setOrientation(config.orientation);
     gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
     gui->setMouseOverTolerance(config.mouseOverTolerance);

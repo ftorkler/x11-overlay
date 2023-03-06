@@ -23,13 +23,16 @@ public:
 
     // main
     std::string inputFile;
-    // appearance
-    Ansi::Profile colorProfile;
     // positon
     int monitorIndex;
     Gui::Orientation orientation;
     int screenEdgeSpacing;
     int lineSpacing;
+    // font
+    std::string fontName;
+    int fontSize;
+    // colors
+    Ansi::Profile colorProfile;
     // mouse over
     int mouseOverTolerance;
     int mouseOverDimming;
@@ -54,6 +57,13 @@ private:
     static bool parseCommentLine(std::string line);
     static bool parseSectionLine(std::string line, std::string& section);
     static bool parseKeyValueLine(std::string line, std::string section, Config& config);
+
+    static void printSection(std::ostream& os, const std::string& section);
+    template <typename T> 
+    static void printSectionKeyValue(std::ostream& os, const std::string& key, const T& value)
+    {
+        os << key << "=" << value << std::endl;
+    }
 
 };
 

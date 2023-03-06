@@ -2,11 +2,18 @@
 
 InputFile=/some/inputFile.txt
 
-[Position]
+[Positioning]
 MonitorIndex=1
 Orientation=SE
 ScreenEdgeSpacing=10
 LineSpacing=20
+
+[Font]
+Name=Mx437 IBM VGA 8x16
+Size=24
+
+[Colors]
+AnsiProfile=XP
 
 [MouseOver]
 Tolerance=0

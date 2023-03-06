@@ -15,7 +15,7 @@ X11Canvas::X11Canvas(Display* display, Window window, Visual* visual, int screen
     if (!XftColorAllocName(display, visual, colormap, "#000000", &xftColor)) {
         std::cout << "creating dummy color... FAILED" << std::endl;
     }
-    setFont("9x15bold");
+    setFont("");
 }
 
 X11Canvas::~X11Canvas()
@@ -27,6 +27,9 @@ X11Canvas::~X11Canvas()
 
 void X11Canvas::setFont(const std::string& fontname)
 {
+    if (xftFont) {
+        XftFontClose(display, xftFont);
+    }
     xftFont = XftFontOpenName(display, screen, fontname.c_str());
     if (!xftFont) {
         std::cout << "loading Xft font... FAILED" << std::endl;

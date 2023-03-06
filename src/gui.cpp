@@ -92,6 +92,11 @@ void Gui::setMonitorIndex(unsigned int index)
     window->setActiveMonitor(index);
 }
 
+void Gui::setFont(const std::string& font)
+{
+    canvas->setFont(font);
+}
+
 void Gui::flush()
 {
     int w = messageMaxWidth;

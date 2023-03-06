@@ -43,7 +43,7 @@ void TestConfig::test_parseKeyValueLine_forInteger()
 {
 	Config config = Config::defaultConfig();
 	int defaultMonitorIndex = config.monitorIndex;
-	std::string section = "Position";
+	std::string section = "Positioning";
 
 	TEST_CASE("test parseKeyValueLine: MonitorIndex (invalid value)");
 	TEST_CHECK(Config::parseKeyValueLine("MonitorIndex=abc", section, config) == false);
@@ -98,7 +98,7 @@ void TestConfig::test_parseKeyValueLine_forOrientation()
 {
 	Config config = Config::defaultConfig();
 	int defaultOrientation = config.orientation;
-	std::string section = "Position";
+	std::string section = "Positioning";
 
 	TEST_CASE("test parseKeyValueLine: Orientation (invalid value)");
 	TEST_CHECK(Config::parseKeyValueLine("Orientation=abc", section, config) == false);
@@ -134,6 +134,12 @@ void TestConfig::test_fromFile() {
 	TEST_CHECK(fileConfig.screenEdgeSpacing ==  10);
 	TEST_CHECK(fileConfig.lineSpacing != defaultConfig.lineSpacing);
 	TEST_CHECK(fileConfig.lineSpacing ==  20);
+	TEST_CHECK(fileConfig.fontName != defaultConfig.fontName);
+	TEST_CHECK(fileConfig.fontName == "Mx437 IBM VGA 8x16");
+	TEST_CHECK(fileConfig.fontSize != defaultConfig.fontSize);
+	TEST_CHECK(fileConfig.fontSize == 24);
+	TEST_CHECK(fileConfig.colorProfile != defaultConfig.colorProfile);
+	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
 	TEST_CHECK(fileConfig.inputFile != defaultConfig.inputFile);
 	TEST_CHECK(fileConfig.inputFile ==  "/some/inputFile.txt");
 }

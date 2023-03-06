@@ -7,16 +7,40 @@
 #include <unistd.h>
 #include <pwd.h>
 
+static constexpr const char* SECTION_NONE = "";
+static constexpr const char* SECTION_NONE_INPUT_FILE = "InputFile";
+static constexpr const char* SECTION_POSITIONING = "Positioning";
+static constexpr const char* SECTION_POSITIONING_MONITOR_INDEX = "MonitorIndex";
+static constexpr const char* SECTION_POSITIONING_ORIENTATION = "Orientation";
+static constexpr const char* SECTION_POSITIONING_SCREEN_EDGE_SPACING = "ScreenEdgeSpacing";
+static constexpr const char* SECTION_POSITIONING_LINE_SPACING = "LineSpacing";
+static constexpr const char* SECTION_FONT = "Font";
+static constexpr const char* SECTION_FONT_NAME = "Name";
+static constexpr const char* SECTION_FONT_SIZE = "Size";
+static constexpr const char* SECTION_COLORS = "Colors";
+static constexpr const char* SECTION_COLORS_ANSI_PROFILE = "AnsiProfile";
+static constexpr const char* SECTION_MOUSE_OVER = "MouseOver";
+static constexpr const char* SECTION_MOUSE_OVER_TOLERANCE = "Tolerance";
+static constexpr const char* SECTION_MOUSE_OVER_DIMMING = "Dimming";
+static constexpr const char* SECTION_INTERVAL = "Intervals";
+
+
 Config::Config()
 :
     configFile(""),
     verbose(false),
     inputFile(""),
-    colorProfile(Ansi::Profile::VGA),
+    // positioning
     monitorIndex(INT_MIN),
     orientation(Gui::Orientation::NONE),
     screenEdgeSpacing(INT_MIN),
     lineSpacing(INT_MIN),
+    // font
+    fontName(""),
+    fontSize(0),
+    // colors
+    colorProfile(Ansi::Profile::VGA),
+    // mouse over
     mouseOverTolerance(INT_MIN),
     mouseOverDimming(INT_MIN)
 {
@@ -32,13 +56,19 @@ Config Config::overrideWith(const Config& other)
     if (other.configFile != unsetConfig.configFile) this->configFile = other.configFile;
     if (other.verbose != unsetConfig.verbose) this->verbose = other.verbose;
     if (other.inputFile != unsetConfig.inputFile) this->inputFile = other.inputFile;
-    if (other.colorProfile != unsetConfig.colorProfile) this->colorProfile = other.colorProfile;
+    // positioning
+    if (other.monitorIndex != unsetConfig.monitorIndex) this->monitorIndex = other.monitorIndex;
     if (other.orientation != unsetConfig.orientation) this->orientation = other.orientation;
-    if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
-    if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
     if (other.screenEdgeSpacing != unsetConfig.screenEdgeSpacing) this->screenEdgeSpacing = other.screenEdgeSpacing;
     if (other.lineSpacing != unsetConfig.lineSpacing) this->lineSpacing = other.lineSpacing;
-    if (other.monitorIndex != unsetConfig.monitorIndex) this->monitorIndex = other.monitorIndex;
+    // font
+    if (other.fontName != unsetConfig.fontName) this->fontName = other.fontName;
+    if (other.fontSize != unsetConfig.fontSize) this->fontSize = other.fontSize;
+    // colors
+    if (other.colorProfile != unsetConfig.colorProfile) this->colorProfile = other.colorProfile;
+    // mouse over
+    if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
+    if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
     return *this;
 }
 
@@ -46,22 +76,35 @@ void Config::print(std::ostream& os) const
 {
     os << "default config file path is '" << getDefaultConfigFilePath() << "'" << std::endl;
     os << "---- resulting config ----" << std::endl;
-    os << "InputFile=" << inputFile << std::endl;    
+    printSectionKeyValue(os, SECTION_NONE_INPUT_FILE, inputFile);
     os << std::endl;
-    os << "[Appearance]"<< std::endl;
-    os << "ColorProfile=" << Ansi::profileToString(colorProfile) << std::endl;
+
+    printSection(os, SECTION_POSITIONING);
+    printSectionKeyValue(os, SECTION_POSITIONING_MONITOR_INDEX, monitorIndex);
+    printSectionKeyValue(os, SECTION_POSITIONING_ORIENTATION, Gui::orientationToString(orientation));
+    printSectionKeyValue(os, SECTION_POSITIONING_SCREEN_EDGE_SPACING, screenEdgeSpacing);
+    printSectionKeyValue(os, SECTION_POSITIONING_LINE_SPACING, lineSpacing);
     os << std::endl;
-    os << "[Position]"<< std::endl;
-    os << "MonitorIndex=" << monitorIndex << std::endl;
-    os << "Orientation=" << Gui::orientationToString(orientation) << std::endl;
-    os << "ScreenEdgeSpacing=" << screenEdgeSpacing << std::endl;
-    os << "LineSpacing=" << lineSpacing << std::endl;
+
+    printSection(os, SECTION_FONT);
+    printSectionKeyValue(os, SECTION_FONT_NAME, fontName);
+    printSectionKeyValue(os, SECTION_FONT_SIZE, fontSize);
     os << std::endl;
-    os << "[MouseOver]"<< std::endl;
-    os << "Tolerance=" << mouseOverTolerance << std::endl;
-    os << "Dimming=" << mouseOverDimming << std::endl;
+
+    printSection(os, SECTION_COLORS);
+    printSectionKeyValue(os, SECTION_COLORS_ANSI_PROFILE, Ansi::profileToString(colorProfile));
+    os << std::endl;
+
+    printSection(os, SECTION_MOUSE_OVER);
+    printSectionKeyValue(os, SECTION_MOUSE_OVER_TOLERANCE, mouseOverTolerance);
+    printSectionKeyValue(os, SECTION_MOUSE_OVER_DIMMING, mouseOverDimming);
 
     os << "--------------------------" << std::endl;
+}
+
+void Config::printSection(std::ostream& os, const std::string& section)
+{
+    os << "[" << section << "]" << std::endl;
 }
 
 void Config::exitWithUsage(int exitCode)
@@ -72,12 +115,14 @@ void Config::exitWithUsage(int exitCode)
     std::cout << "  -c <file>           file path to read configuration from" << std::endl;
     std::cout << "  -d <percent>        how much the window dims on mouse over; defaults to '75'%" << std::endl;
     std::cout << "  -e <pixel>          screen edge spacing in pixels; defaults to '0'" << std::endl;
+    std::cout << "  -f <name>           font name; defaults to 'NotoSansMono'" << std::endl;
     std::cout << "  -h                  prints this help text" << std::endl;
     std::cout << "  -l <pixel>          line spacing in pixels; defaults to '0'" << std::endl;
     std::cout << "  -m <index>          monitor to use; defaults to '0'" << std::endl;
     std::cout << "  -o <value>          orientation to align window and lines; defaults to 'NW'" << std::endl;
     std::cout << "                      possible values are N, NE, E, SE, S, SW, W, NW and CENTER" << std::endl;
     std::cout << "  -p <value>          profile for ansi colors; values are VGA or XP" << std::endl;
+    std::cout << "  -s <size>           font size; defaults to '12'" << std::endl;
     std::cout << "  -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'" << std::endl;
     std::cout << "  -v                  be verbose and print some debug output" << std::endl;
     exit(exitCode);
@@ -89,13 +134,19 @@ Config Config::defaultConfig()
     config.configFile = "",
     config.verbose = false,
     config.inputFile = "",
-    config.colorProfile = Ansi::Profile::VGA;
+    // positioning
+    config.monitorIndex = 0;
     config.orientation = Gui::Orientation::NW;
-    config.mouseOverDimming = 75;
-    config.mouseOverTolerance = 0;
     config.screenEdgeSpacing = 0;
     config.lineSpacing = 0;
-    config.monitorIndex = 0;
+    // font
+    config.fontName="NotoSansMono";
+    config.fontSize=12;
+    // colors
+    config.colorProfile = Ansi::Profile::VGA;
+    // mouse over
+    config.mouseOverDimming = 75;
+    config.mouseOverTolerance = 0;
     return config;
 }
 
@@ -143,7 +194,7 @@ Config Config::fromParameters(int argc, char** argv)
     Config config;
 
     int opt;
-    while((opt = getopt(argc, argv, "-c:d:e:hl:m:o:p:t:v")) != -1)
+    while((opt = getopt(argc, argv, "-c:d:e:f:hl:m:o:p:s:t:v")) != -1)
     {
         switch(opt)
         {
@@ -155,6 +206,9 @@ Config Config::fromParameters(int argc, char** argv)
                 break;
             case 'e':
                 config.screenEdgeSpacing = assertIntParameter(opt, optarg);
+                break;
+            case 'f':
+                config.fontName = optarg;
                 break;
             case 'h':
                 argHelp = true;
@@ -170,6 +224,9 @@ Config Config::fromParameters(int argc, char** argv)
                 break;
             case 'p':
                 config.colorProfile = assertProfileParameter(opt, optarg);
+                break;
+            case 's':
+                config.fontSize = assertIntParameter(opt, optarg);
                 break;
             case 't':
                 config.mouseOverTolerance = assertIntParameter(opt, optarg);
@@ -262,39 +319,20 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
         }
 
         try {
-            if (section == "")
+            if (section == SECTION_NONE)
             {
-                if (key == "InputFile") {
+                if (key == SECTION_NONE_INPUT_FILE) {
                     config.inputFile = value;
                     return true;
                 }
             }
-            else if (section == "Appearance") 
+            else if (section == SECTION_POSITIONING) 
             {
-                if (key == "ColorProfile") {
-                    Ansi::Profile profile = Ansi::profileFromString(value);
-                    if (profile == Ansi::Profile::NONE) {
-                        throw std::runtime_error("invalid profile");
-                    }
-                    config.colorProfile = profile;
-                    return true;
-                }
-            }
-            else if (section == "Position") 
-            {
-                if (key == "MonitorIndex") {
+                if (key == SECTION_POSITIONING_MONITOR_INDEX) {
                     config.monitorIndex = std::stoi(value);
                     return true;
                 }
-                if (key == "LineSpacing") {
-                    config.lineSpacing = std::stoi(value);
-                    return true;
-                }
-                if (key == "ScreenEdgeSpacing") {
-                    config.screenEdgeSpacing = std::stoi(value);
-                    return true;
-                }
-                if (key == "Orientation") {
+                if (key == SECTION_POSITIONING_ORIENTATION) {
                     Gui::Orientation orientation = Gui::orientationFromString(value);
                     if (orientation == Gui::Orientation::NONE) {
                         throw std::runtime_error("invalid orientation");
@@ -302,14 +340,44 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                     config.orientation = orientation;
                     return true;
                 }
+                if (key == SECTION_POSITIONING_SCREEN_EDGE_SPACING) {
+                    config.screenEdgeSpacing = std::stoi(value);
+                    return true;
+                }
+                if (key == SECTION_POSITIONING_LINE_SPACING) {
+                    config.lineSpacing = std::stoi(value);
+                    return true;
+                }
             }
-            else if (section == "MouseOver") 
+            else if (section == SECTION_FONT) 
             {
-                if (key == "Tolerance") {
+                if (key == SECTION_FONT_NAME) {
+                    config.fontName = value;
+                    return true;
+                }
+                if (key == SECTION_FONT_SIZE) {
+                    config.fontSize = std::stoi(value);
+                    return true;
+                }
+            }
+            else if (section == SECTION_COLORS) 
+            {
+                if (key == SECTION_COLORS_ANSI_PROFILE) {
+                    Ansi::Profile profile = Ansi::profileFromString(value);
+                    if (profile == Ansi::Profile::NONE) {
+                        throw std::runtime_error("invalid ansi profile");
+                    }
+                    config.colorProfile = profile;
+                    return true;
+                }
+            }
+            else if (section == SECTION_MOUSE_OVER) 
+            {
+                if (key == SECTION_MOUSE_OVER_TOLERANCE) {
                     config.mouseOverTolerance = std::stoi(value);
                     return true;
                 }
-                if (key == "Dimming") {
+                if (key == SECTION_MOUSE_OVER_DIMMING) {
                     config.mouseOverDimming = std::stoi(value);
                     return true;
                 }
