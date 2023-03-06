@@ -23,7 +23,7 @@ unsigned long clockMillis()
         (std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void sleep(unsigned long millis)
+void sleepMillis(unsigned long millis)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(millis));
 }
@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
 
         gui->flush();
 
-        sleep(CHECK_GUI_INTERVAL_MS);
+        sleepMillis(CHECK_GUI_INTERVAL_MS);
     }
 
     delete gui;
