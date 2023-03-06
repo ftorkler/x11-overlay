@@ -56,12 +56,26 @@ OPTIONS:
   -c <file>           file path to read configuration from
   -d <percent>        how much the window dims on mouse over; defaults to '75'%
   -e <pixel>          screen edge spacing in pixels; defaults to '0'
+  -f <name>           font name; defaults to 'NotoSansMono'
   -h                  prints this help text
   -l <pixel>          line spacing in pixels; defaults to '0'
   -m <index>          monitor to use; defaults to '0'
   -o <value>          orientation to align window and lines; defaults to 'NW'
                       possible values are N, NE, E, SE, S, SW, W, NW and CENTER
   -p <value>          profile for ansi colors; values are VGA or XP
+  -s <size>           font size; defaults to '12'
   -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'
   -v                  be verbose and print some debug output
 ```
+
+### Fonts
+
+The overlay tool uses the FreeType font rasterizer to render fonts. Therefore all available fonts on your system can be listed using the fontconfig tools (e.g. `fc-list`).  
+
+So here is an example how to display the project's ansi logo as an overlay:
+* install a nice looking mono space font that support charset `CP437` (e.g. a classic IBM fonts from [int10h.org](https://int10h.org/oldschool-pc-fonts/fontlist/?1))
+* find out the correct name of the (new) installed font  
+`$> fc-list | grep -i "IBM"`  
+`/usr/local/share/fonts/m/Mx437_IBM_VGA_8x16.ttf: Mx437 IBM VGA 8x16:style=Regular`
+* start overlay using specific font  
+`$> ./bin/overlay -f "Mx437 IBM VGA 8x16" docs/logo.utf8.ans`
