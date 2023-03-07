@@ -3,7 +3,7 @@
 # x11-overlay
 
 [![C++](https://img.shields.io/badge/C++-Solutions-blue.svg?logo=c%2B%2B)](#)
-[![Build Status](https://img.shields.io/github/workflow/status/ftorkler/x11-overlay/CI%20Build?logo=github)](#)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ftorkler/x11-overlay/build.yml?branch=main&logo=github)](#)
 
 This is a tiny program that displays the content of text files as an overlay on your desktop.  
 Its goal is simplicity, a non-distracting visualization and especially it should not interfere with user interactions targeting the underlying content.
