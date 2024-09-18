@@ -13,7 +13,7 @@ Color::Color(
 {
 }
 
-bool Color::operator==(Color other)
+bool Color::operator==(Color other) const
 {
     return r == other.r &&
            g == other.g &&
@@ -21,7 +21,7 @@ bool Color::operator==(Color other)
            a == other.a;
 }
 
-bool Color::operator != (Color other) 
+bool Color::operator != (Color other) const
 { 
     return !(*this == other); 
 }

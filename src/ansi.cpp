@@ -4,11 +4,6 @@
 #include <sstream>
 #include <deque>
 
-#define ANSI_INIT "\e["
-#define ANSI_START '\e'
-#define ANSI_END 'm'
-#define ANSI_DELIMITER ';'
-
 #define PREFIX_FG_COLOR "\e[38"
 #define PREFIX_BG_COLOR "\e[48"
 #define PREFIX_COLOR_LEN 4
@@ -17,16 +12,13 @@
 #define INFIX_COLOR_24BIT ";2;"
 #define PREFIX_COLOR_24BIT_LEN 7
 
-#define FALLBACK_COLOR Color(255, 255, 255)
-
-
 // https://en.wikipedia.org/wiki/ANSI_escape_code
-Color Ansi::toColor(const std::string& ansi, bool increaseIntensity, Ansi::Profile profile)
+Color Ansi::toColor(const std::string& ansi, Color fallbackColor, bool increaseIntensity, Ansi::Profile profile)
 {
     int pos;
     if (ansi.rfind(ANSI_INIT) != 0) {
         // fallback
-        return FALLBACK_COLOR;
+        return fallbackColor;
     }
 
     if (ansi.find(PREFIX_FG_COLOR) == 0 || ansi.find(PREFIX_BG_COLOR) == 0) {
@@ -34,14 +26,14 @@ Color Ansi::toColor(const std::string& ansi, bool increaseIntensity, Ansi::Profi
         // 24bit - ESC[48;2;[colorprofile];<r>;<g>;<b>m - background color
         if (ansi.find(INFIX_COLOR_24BIT) == PREFIX_COLOR_LEN && (pos = ansi.rfind(ANSI_END)) > PREFIX_COLOR_24BIT_LEN) {
             std::string colorCode = ansi.substr(PREFIX_COLOR_24BIT_LEN, pos - PREFIX_COLOR_24BIT_LEN);
-            return _to24bitColor(colorCode);
+            return _to24bitColor(colorCode, fallbackColor);
         }
 
         // 8bit - ESC[38;5;<code>m - foreground color
         // 8bit - ESC[48;5;<code>m - background color
         if (ansi.find(INFIX_COLOR_8BIT) == PREFIX_COLOR_LEN && (pos = ansi.rfind(ANSI_END)) > PREFIX_COLOR_8BIT_LEN) {
             std::string colorCode = ansi.substr(PREFIX_COLOR_8BIT_LEN, pos - PREFIX_COLOR_8BIT_LEN);
-            return _to8bitColor(stoi(colorCode), profile);
+            return _to8bitColor(stoi(colorCode), fallbackColor, profile);
         }
     }
 
@@ -50,25 +42,24 @@ Color Ansi::toColor(const std::string& ansi, bool increaseIntensity, Ansi::Profi
         int colorCode = stoi(ansi.substr(2, pos - 2));
         if (colorCode >= 30 && colorCode <= 37) {
             int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 30 + intensitiyLift, profile);
+            return _to8bitColor(colorCode - 30 + intensitiyLift, fallbackColor, profile);
         }
         if (colorCode >= 40 && colorCode <= 47) {
             int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 40 + intensitiyLift, profile);
+            return _to8bitColor(colorCode - 40 + intensitiyLift, fallbackColor, profile);
         }
         if (colorCode >= 90 && colorCode <= 97) {
-            return _to8bitColor(colorCode - 90 + 8, profile);
+            return _to8bitColor(colorCode - 90 + 8, fallbackColor, profile);
         }
         if (colorCode >= 100 && colorCode <= 107) {
-            return _to8bitColor(colorCode - 100 + 8, profile);
+            return _to8bitColor(colorCode - 100 + 8, fallbackColor, profile);
         }
     }
 
-    // fallback
-    return FALLBACK_COLOR;
+    return fallbackColor;
 }
 
-Color Ansi::_to24bitColor(std::string code)
+Color Ansi::_to24bitColor(std::string code, Color fallbackColor)
 {
     std::stringstream ss(code);
     std::vector<int> tokens;        
@@ -90,10 +81,10 @@ Color Ansi::_to24bitColor(std::string code)
             return Color(r, g, b);
         }
     }
-    return FALLBACK_COLOR;
+    return fallbackColor;
 }
 
-Color Ansi::_to8bitColor(int code, Ansi::Profile profile)
+Color Ansi::_to8bitColor(int code, Color fallbackColor, Ansi::Profile profile)
 {
     Color colors[2][16] = 
     {
@@ -146,7 +137,7 @@ Color Ansi::_to8bitColor(int code, Ansi::Profile profile)
 
     if (code < 0 || code > 255)
     {
-        return FALLBACK_COLOR;
+        return fallbackColor;
     }
     if (code < 16)
     {
@@ -171,7 +162,7 @@ Color Ansi::_to8bitColor(int code, Ansi::Profile profile)
 
 Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
 {
-    if (text.length() < 4 || text[0] != ANSI_START || text[text.length()-1] != ANSI_END) {
+    if (text.length() < 4 || text.rfind(ANSI_INIT) != 0 || text.find(ANSI_END) != text.length()-1) {
         return Sequence::NONE;
     }
 

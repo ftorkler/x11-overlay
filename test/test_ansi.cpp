@@ -9,7 +9,8 @@
 
 void check_to_8bit_color(int givenCode, Color expectedColor)
 {
-	Color color = Ansi::_to8bitColor(givenCode);
+	Color fallbackColor = Color(255, 255, 255, 255);
+	Color color = Ansi::_to8bitColor(givenCode, fallbackColor);
 	TEST_CHECK_(color == expectedColor, "fromAnsi8bit(%d) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)", 
 		givenCode,
 		color.r, color.g, color.b, color.a,
@@ -18,7 +19,8 @@ void check_to_8bit_color(int givenCode, Color expectedColor)
 
 void check_to_color(std::string givenCode, Color expectedColor, bool increaseIntensity = false)
 {
-	Color color = Ansi::toColor(givenCode, increaseIntensity);
+	Color fallbackColor = Color(255, 255, 255, 255);
+	Color color = Ansi::toColor(givenCode, fallbackColor, increaseIntensity);
 	TEST_CHECK_(color == expectedColor, "fromAnsi(ESC%s) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)", 
 		givenCode.substr(1).c_str(),
 		color.r, color.g, color.b, color.a,
@@ -287,9 +289,12 @@ void TestAnsi::test_parse_control_sequence()
 
 	TEST_EQUAL(Ansi::parseControlSequence(""), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("text"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\em"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\e0;0m"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[m"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[38;5;2"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("e[38;5;2m"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\e[0;0m2m"), Ansi::Sequence::NONE);
 
 	TEST_EQUAL(Ansi::parseControlSequence("\e[8m"), Ansi::Sequence::UNKNOWN);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[88m"), Ansi::Sequence::UNKNOWN);

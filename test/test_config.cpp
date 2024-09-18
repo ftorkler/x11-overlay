@@ -46,7 +46,7 @@ void TestConfig::test_parseKeyValueLine_forInteger()
 	std::string section = "Positioning";
 
 	TEST_CASE("test parseKeyValueLine: MonitorIndex (invalid value)");
-	TEST_CHECK(Config::parseKeyValueLine("MonitorIndex=abc", section, config) == false);
+	TEST_EXCEPTION(Config::parseKeyValueLine("MonitorIndex=abc", section, config), std::runtime_error);
 	TEST_CHECK(config.monitorIndex == defaultMonitorIndex);
 
 	TEST_CASE("test parseKeyValueLine: MonitorIndex (commented value)");
@@ -101,7 +101,7 @@ void TestConfig::test_parseKeyValueLine_forOrientation()
 	std::string section = "Positioning";
 
 	TEST_CASE("test parseKeyValueLine: Orientation (invalid value)");
-	TEST_CHECK(Config::parseKeyValueLine("Orientation=abc", section, config) == false);
+	TEST_EXCEPTION(Config::parseKeyValueLine("Orientation=abc", section, config), std::runtime_error);
 	TEST_CHECK(config.orientation == defaultOrientation);
 
 	TEST_CASE("test parseKeyValueLine: Orientation (empty value)");
@@ -140,12 +140,22 @@ void TestConfig::test_fromFile() {
 	TEST_CHECK(fileConfig.fontSize == 24);
 	TEST_CHECK(fileConfig.colorProfile != defaultConfig.colorProfile);
 	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
+	TEST_CHECK(fileConfig.defaultForegroundColor != defaultConfig.defaultForegroundColor);
+	TEST_CHECK(fileConfig.defaultForegroundColor == Color(255, 0, 0, 200));
+	TEST_CHECK(fileConfig.defaultBackgroundColor != defaultConfig.defaultBackgroundColor);
+	TEST_CHECK(fileConfig.defaultBackgroundColor == Color(11, 22, 33, 100));
 	TEST_CHECK(fileConfig.inputFile != defaultConfig.inputFile);
 	TEST_CHECK(fileConfig.inputFile ==  "/some/inputFile.txt");
+
+	fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc_colorprofile-after-color");
+	TEST_CASE("test fromFile (colorprofile after color)");
+	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
+	TEST_CHECK(fileConfig.defaultForegroundColor != defaultConfig.defaultForegroundColor);
+	TEST_CHECK(fileConfig.defaultForegroundColor == Color(255, 0, 0, 200));
 }
 
 std::string TestConfig::getExecutablePath() {
-	char buffer[256];
+	char buffer[1024];
 	auto length = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
 	if (length >= 0) {
     	buffer[length] = '\0';

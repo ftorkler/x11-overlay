@@ -6,6 +6,11 @@
 
 #include "color.h"
 
+#define ANSI_INIT "\e["
+#define ANSI_START '\e'
+#define ANSI_END 'm'
+#define ANSI_DELIMITER ';'
+
 class Ansi
 {
 
@@ -33,7 +38,7 @@ public:
     static std::string profileToString(Profile profile);
     static Profile profileFromString(const std::string& input);
 
-    static Color toColor(const std::string &ansi, bool increaseIntensity = false, Profile profile = Profile::XP);
+    static Color toColor(const std::string &ansi, Color fallbackColor, bool increaseIntensity = false, Profile profile = Profile::XP);
  
     static Sequence parseControlSequence(const std::string& text);
 
@@ -41,8 +46,8 @@ public:
 
  private:
 
-    static Color _to24bitColor(std::string code);
-    static Color _to8bitColor(int code, Profile profile = Profile::XP);
+    static Color _to24bitColor(std::string code, Color fallbackColor);
+    static Color _to8bitColor(int code, Color fallbackColor, Profile profile = Profile::XP);
 
     static void subsplit(const std::string& text, std::vector<std::string>* result);
 

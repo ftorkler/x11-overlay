@@ -91,6 +91,8 @@ int main(int argc, char* argv[])
     gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
     gui->setOrientation(config.orientation);
     gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
+    gui->setDefaultForgroundColor(config.defaultForegroundColor);
+    gui->setDefaultBackgroundColor(config.defaultBackgroundColor);
     gui->setMouseOverTolerance(config.mouseOverTolerance);
     gui->setScreenEdgeSpacing(config.screenEdgeSpacing);
     gui->setLineSpacing(config.lineSpacing);

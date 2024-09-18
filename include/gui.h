@@ -24,8 +24,8 @@ public:
     Gui();
     ~Gui();
 
-    void setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-    void setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void setDefaultForgroundColor(const Color& color);
+    void setDefaultBackgroundColor(const Color& color);
     void setColorProfile(Ansi::Profile profile);
     void setMouseOverDimming(const float& dimming);
     void setMouseOverTolerance(unsigned int tolerance);
@@ -71,6 +71,7 @@ private:
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;
     unsigned int mouseOverTolerance;
+    float mouseOverDimming;
     float alpha;
     Color fgColor;
     Color bgColor;

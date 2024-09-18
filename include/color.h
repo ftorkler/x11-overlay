@@ -13,8 +13,8 @@ public:
           unsigned char b = 255, 
           unsigned char a = 255);
 
-    bool operator == (Color other);
-    bool operator != (Color other);
+    bool operator == (Color other) const;
+    bool operator != (Color other) const;
 
 };
 

@@ -1,0 +1,14 @@
+;this is a config file for tests
+;
+;   The resulting color for a given color code depends on the selected color profile:
+;   -> ansi sequence '[91m' for red color with ansi profile 'XP' maps to RGB(255, 0, 0)
+;   -> ansi sequence '[91m' for red color with ansi profile 'VGA' maps to RGB(255, 85, 85)
+;
+;   This test should ensure that the configured color profile has an affect when it is defined after the color.
+;
+
+
+[Colors]
+ForegroundAlpha=200
+ForegroundColor=[91m
+AnsiProfile=XP

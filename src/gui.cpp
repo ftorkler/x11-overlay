@@ -25,8 +25,8 @@ Gui::Gui()
     window = new X11Window(0, 0, 480, 640);
     canvas = window->createCanvas();
 
-    setDefaultBackgroundColor(0, 0, 0, 100);
-    setDefaultForgroundColor(255, 255, 255, 200);
+    setDefaultForgroundColor(Color(255, 255, 255, 200));
+    setDefaultBackgroundColor(Color(0, 0, 0, 100));
     clearMessages();
 }
 
@@ -36,16 +36,16 @@ Gui::~Gui()
     delete window;
 }
 
-void Gui::setDefaultForgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+void Gui::setDefaultForgroundColor(const Color& color)
 {
     redraw = true;
-    fgColor = Color(r, g, b, a);
+    fgColor = color;
 }
 
-void Gui::setDefaultBackgroundColor(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+void Gui::setDefaultBackgroundColor(const Color& color)
 {
     redraw = true;
-    bgColor = Color(r, g, b, a);
+    bgColor = color;
 }
 
 void Gui::setColorProfile(Ansi::Profile profile)
