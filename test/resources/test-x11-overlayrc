@@ -19,6 +19,6 @@ ForegroundAlpha=200
 BackgroundColor=[48;2;11;22;33m
 BackgroundAlpha=100
 
-[MouseOver]
+[Behavior]
 Tolerance=0
 Dimming=75

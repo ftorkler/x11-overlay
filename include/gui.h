@@ -27,6 +27,7 @@ public:
     void setDefaultForgroundColor(const Color& color);
     void setDefaultBackgroundColor(const Color& color);
     void setColorProfile(Ansi::Profile profile);
+    void setDimming(const float& dimming);
     void setMouseOverDimming(const float& dimming);
     void setMouseOverTolerance(unsigned int tolerance);
     void setOrientation(Orientation orientation);
@@ -71,8 +72,8 @@ private:
     unsigned int screenEdgeSpacing;
     unsigned int lineSpacing;
     unsigned int mouseOverTolerance;
-    float mouseOverDimming;
     float alpha;
+    float mouseOverAlpha;
     Color fgColor;
     Color bgColor;
 

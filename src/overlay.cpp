@@ -87,16 +87,21 @@ int main(int argc, char* argv[])
     Config config = readConfig(argc, argv);
 
     gui = new Gui();
-    gui->setColorProfile(config.colorProfile);
-    gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
+    // Postioning
     gui->setOrientation(config.orientation);
-    gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
-    gui->setDefaultForgroundColor(config.defaultForegroundColor);
-    gui->setDefaultBackgroundColor(config.defaultBackgroundColor);
-    gui->setMouseOverTolerance(config.mouseOverTolerance);
     gui->setScreenEdgeSpacing(config.screenEdgeSpacing);
     gui->setLineSpacing(config.lineSpacing);
     gui->setMonitorIndex(config.monitorIndex);
+    // Font
+    gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
+    // Colors
+    gui->setColorProfile(config.colorProfile);
+    gui->setDefaultForgroundColor(config.defaultForegroundColor);
+    gui->setDefaultBackgroundColor(config.defaultBackgroundColor);
+    // Behavior
+    gui->setDimming(config.dimming / 100.0f);
+    gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
+    gui->setMouseOverTolerance(config.mouseOverTolerance);
 
     while (running)
     {

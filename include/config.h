@@ -39,9 +39,10 @@ public:
     std::string tempDefaultBackgroundColor;
     Color defaultForegroundColor;
     Color defaultBackgroundColor;
-    // mouse over
-    int mouseOverTolerance;
+    // behavior
+    int dimming;
     int mouseOverDimming;
+    int mouseOverTolerance;
 
     static Config defaultConfig();
     static Config fromParameters(int argc, char** argv);

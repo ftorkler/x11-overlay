@@ -53,10 +53,16 @@ void Gui::setColorProfile(Ansi::Profile profile)
     colorProfile = profile;
 }
 
-void Gui::setMouseOverDimming(const float& dimming)
+void Gui::setDimming(const float& dimming)
 {
     redraw = true;
     this->alpha = 1.0f - dimming;
+}
+
+void Gui::setMouseOverDimming(const float& dimming)
+{
+    redraw = true;
+    this->mouseOverAlpha = 1.0f - dimming;
 }
 
 void Gui::setMouseOverTolerance(unsigned int tolerance)
@@ -123,7 +129,7 @@ void Gui::flush()
 
         int offsetX = calcXforOrientation(0, messageMaxWidth, 0);
 
-        float a = mouseOver ? alpha : 1.0f;
+        float a = mouseOver ? mouseOverAlpha : alpha;
         DrawColorCmd(bgColor).draw(canvas, offsetX, a);
         for (auto cmd : drawBgCommands) {
             cmd->draw(canvas, offsetX, a);

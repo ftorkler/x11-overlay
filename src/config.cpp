@@ -9,13 +9,9 @@
 #include <unistd.h>
 #include <pwd.h>
 
-static constexpr const char* LONG_OPT_FG_COLOR = "fg-color";
 static constexpr const int SHORT_OPT_FG_COLOR = 1000;
-static constexpr const char* LONG_OPT_FG_ALPHA = "fg-alpha";
 static constexpr const int SHORT_OPT_FG_ALPHA = 1001;
-static constexpr const char* LONG_OPT_BG_COLOR = "bg-color";
 static constexpr const int SHORT_OPT_BG_COLOR = 1002;
-static constexpr const char* LONG_OPT_BG_ALPHA = "bg-alpha";
 static constexpr const int SHORT_OPT_BG_ALPHA = 1003;
 
 static constexpr const char* SECTION_NONE = "";
@@ -34,10 +30,10 @@ static constexpr const char* SECTION_COLORS_FG_COLOR = "ForegroundColor";
 static constexpr const char* SECTION_COLORS_FG_ALPHA = "ForegroundAlpha";
 static constexpr const char* SECTION_COLORS_BG_COLOR = "BackgroundColor";
 static constexpr const char* SECTION_COLORS_BG_ALPHA = "BackgroundAlpha";
-static constexpr const char* SECTION_MOUSE_OVER = "MouseOver";
-static constexpr const char* SECTION_MOUSE_OVER_TOLERANCE = "Tolerance";
-static constexpr const char* SECTION_MOUSE_OVER_DIMMING = "Dimming";
-static constexpr const char* SECTION_INTERVAL = "Intervals";
+static constexpr const char* SECTION_BEHAVIOR = "Behavior";
+static constexpr const char* SECTION_BEHAVIOR_TOLERANCE = "Tolerance";
+static constexpr const char* SECTION_BEHAVIOR_DIMMING = "Dimming";
+static constexpr const char* SECTION_BEHAVIOR_MOUSE_OVER_DIMMING = "MouseOverDimming";
 
 
 Config::Config()
@@ -59,9 +55,10 @@ Config::Config()
     tempDefaultBackgroundColor(""),
     defaultForegroundColor(Color(-1,-1,-1,-1)),
     defaultBackgroundColor(Color(-1,-1,-1,-1)),
-    // mouse over
-    mouseOverTolerance(INT_MIN),
-    mouseOverDimming(INT_MIN)
+    // behavior
+    dimming(INT_MIN),
+    mouseOverDimming(INT_MIN),
+    mouseOverTolerance(INT_MIN)
 {
 }
 
@@ -89,7 +86,8 @@ Config Config::overrideWith(const Config& other)
     if (other.tempDefaultBackgroundColor != unsetConfig.tempDefaultBackgroundColor) this->tempDefaultBackgroundColor = other.tempDefaultBackgroundColor;
     if (other.defaultForegroundColor != unsetConfig.defaultForegroundColor) this->defaultForegroundColor = other.defaultForegroundColor;
     if (other.defaultBackgroundColor != unsetConfig.defaultBackgroundColor) this->defaultBackgroundColor = other.defaultBackgroundColor;
-    // mouse over
+    // behavior
+    if (other.dimming != unsetConfig.dimming) this->dimming = other.dimming;
     if (other.mouseOverDimming != unsetConfig.mouseOverDimming) this->mouseOverDimming = other.mouseOverDimming;
     if (other.mouseOverTolerance != unsetConfig.mouseOverTolerance) this->mouseOverTolerance = other.mouseOverTolerance;
 
@@ -123,12 +121,12 @@ void Config::print(std::ostream& os) const
     printSectionKeyValue(os, SECTION_COLORS_FG_ALPHA, (int)defaultForegroundColor.a);
     printSectionKeyValueAnsiColor(os, SECTION_COLORS_BG_COLOR, Ansi::Sequence::BACKGROUND_COLOR, defaultBackgroundColor);
     printSectionKeyValue(os, SECTION_COLORS_BG_ALPHA, (int)defaultBackgroundColor.a);
-    
     os << std::endl;
 
-    printSection(os, SECTION_MOUSE_OVER);
-    printSectionKeyValue(os, SECTION_MOUSE_OVER_TOLERANCE, mouseOverTolerance);
-    printSectionKeyValue(os, SECTION_MOUSE_OVER_DIMMING, mouseOverDimming);
+    printSection(os, SECTION_BEHAVIOR);
+    printSectionKeyValue(os, SECTION_BEHAVIOR_DIMMING, dimming);
+    printSectionKeyValue(os, SECTION_BEHAVIOR_MOUSE_OVER_DIMMING, mouseOverDimming);
+    printSectionKeyValue(os, SECTION_BEHAVIOR_TOLERANCE, mouseOverTolerance);
 
     os << "--------------------------" << std::endl;
 }
@@ -140,26 +138,36 @@ void Config::printSection(std::ostream& os, const std::string& section)
 
 void Config::exitWithUsage(int exitCode)
 {
-    std::cout << "usage: overlay [OPTIONS] <INPUT_FILE>" << std::endl;
-    std::cout << std::endl;
-    std::cout << "OPTIONS:" << std::endl;
-    std::cout << "  -c <file>           file path to read configuration from" << std::endl;
-    std::cout << "  -d <percent>        how much the window dims on mouse over; defaults to '75'%" << std::endl;
-    std::cout << "      --fg-color      default foreground color; defaults to '[97m' (same as '[38;2;255;255;255m')" << std::endl;
-    std::cout << "      --fg-alpha      default foreground alpha; defaults to '200'" << std::endl;
-    std::cout << "      --bg-color      default background color; defaults to '[40m' (same as '[48;2;0;0;0')" << std::endl;
-    std::cout << "      --bg-alpha      default background alpha; defaults to '100'" << std::endl;
-    std::cout << "  -e <pixel>          screen edge spacing in pixels; defaults to '0'" << std::endl;
-    std::cout << "  -f <name>           font name; defaults to 'NotoSansMono'" << std::endl;
-    std::cout << "  -h                  prints this help text" << std::endl;
-    std::cout << "  -l <pixel>          line spacing in pixels; defaults to '0'" << std::endl;
-    std::cout << "  -m <index>          monitor to use; defaults to '0'" << std::endl;
-    std::cout << "  -o <value>          orientation to align window and lines; defaults to 'NW'" << std::endl;
-    std::cout << "                      possible values are N, NE, E, SE, S, SW, W, NW and CENTER" << std::endl;
-    std::cout << "  -p <value>          profile for ansi colors; values are VGA or XP" << std::endl;
-    std::cout << "  -s <size>           font size; defaults to '12'" << std::endl;
-    std::cout << "  -t <pixel>          tolerance in pixel for mouse over dimming; defaults to '0'" << std::endl;
-    std::cout << "  -v                  be verbose and print some debug output" << std::endl;
+    std::cout << ""
+        "usage: overlay [OPTIONS] <INPUT_FILE>\n"
+        "\n"
+        "  -c, --config=FILE      file path to read configuration from\n"
+        "  -h, --help             prints this help text\n"
+        "  -v, --verbose          be verbose and print some debug output\n"
+        "\n"
+        "Positioning:\n"
+        "  -e PIXEL               screen edge spacing in pixels; defaults to '0'\n"
+        "  -l PIXEL               line spacing in pixels; defaults to '0'\n"
+        "  -m INDEX               monitor to use; defaults to '0'\n"
+        "  -o ORIENTATION         orientation to align window and lines; defaults to 'NW'\n"
+        "                         possible values are N, NE, E, SE, S, SW, W, NW and CENTER\n"
+        "\n"
+        "Font:\n"
+        "  -f, --font-name=FONT   font name; defaults to 'NotoSansMono'\n"
+        "  -s, --font-size=SIZE   font size; defaults to '12'\n"
+        "\n"
+        "Colors:\n"
+        "  -p, --profile=PROFILE  profile for ansi colors; values are VGA or XP\n"
+        "      --fg-color=COLOR   foreground color; defaults to '[97m' (equals '[38;2;255;255;255m')\n"
+        "      --fg-alpha=ALPHA   foreground alpha; defaults to '200'\n"
+        "      --bg-color=COLOR   background color; defaults to '[40m' (equals '[48;2;0;0;0')\n"
+        "      --bg-alpha=ALPHA   background alpha; defaults to '100'\n"
+        "\n"
+        "Behavior:\n"
+        "  -d, --dim=PERCENT      dim the text on mouse over; defaults to '75'%\n"
+        "  -D PERCENT             dim the text in general; defaults to '0'%\n"
+        "  -t PIXEL               pixel tolerance for mouse over dimming; defaults to '0'\n"
+        "";
     exit(exitCode);
 }
 
@@ -183,7 +191,8 @@ Config Config::defaultConfig()
     config.tempDefaultBackgroundColor = "";
     config.defaultForegroundColor = Color(255, 255, 255, 255);
     config.defaultBackgroundColor = Color(0, 0, 0, 100);
-    // mouse over behavior
+    // behavior
+    config.dimming = 0;
     config.mouseOverDimming = 75;
     config.mouseOverTolerance = 0;
     return config;
@@ -259,28 +268,33 @@ Color Config::assertAnsiColorParameter(const std::string& param, Ansi::Profile c
 
 std::string Config::lookupLongOptionName(const struct option* longOptions, int shortOption)
 {
-    if (shortOption > 128) {
-        const option* opt = longOptions;
-        while (opt->val != 0 && opt++) {
-            if (opt->val == shortOption) {
-                return opt->name;
-            }
+    const option* optIter = longOptions;
+    while (optIter->val != 0 && optIter++) {
+        if (optIter->val == shortOption) {
+            return optIter->name;
         }
     }
 
-    return std::string(1, shortOption);
+    return "";
 }
 
 Config Config::fromParameters(int argc, char** argv)
 {
     Config config;
 
-    const char* const short_opts = "-c:d:e:f:hl:m:o:p:s:t:v";
+    const char* const short_opts = "-c:d:D:e:f:hl:m:o:p:s:t:v";
     const option long_opts[] = {
-            {LONG_OPT_FG_COLOR, required_argument, nullptr, SHORT_OPT_FG_COLOR},
-            {LONG_OPT_FG_ALPHA, required_argument, nullptr, SHORT_OPT_FG_ALPHA},
-            {LONG_OPT_BG_COLOR, required_argument, nullptr, SHORT_OPT_BG_COLOR},
-            {LONG_OPT_BG_ALPHA, required_argument, nullptr, SHORT_OPT_BG_ALPHA},
+            {"config",    required_argument, nullptr, 'c'},
+            {"help",      no_argument,       nullptr, 'h'},
+            {"verbose",   no_argument,       nullptr, 'v'},
+            {"font-name", required_argument, nullptr, 'f'},
+            {"font-size", required_argument, nullptr, 's'},
+            {"profile",   required_argument, nullptr, 'p'},
+            {"fg-color",  required_argument, nullptr, SHORT_OPT_FG_COLOR},
+            {"fg-alpha",  required_argument, nullptr, SHORT_OPT_FG_ALPHA},
+            {"bg-color",  required_argument, nullptr, SHORT_OPT_BG_COLOR},
+            {"bg-alpha",  required_argument, nullptr, SHORT_OPT_BG_ALPHA},
+            {"dim",       required_argument, nullptr, 'd'},
             {nullptr, no_argument, nullptr, 0}
     };
 
@@ -294,17 +308,16 @@ Config Config::fromParameters(int argc, char** argv)
                 case 'c':
                     config.configFile = optarg;
                     break;
-                case 'd':
-                    config.mouseOverDimming = assertIntParameter(optarg, 0, 100);
+                case 'h':
+                    exitWithUsage(0);
+                case 'v':
+                    config.verbose = true;
                     break;
+
+                // Positioning 
                 case 'e':
                     config.screenEdgeSpacing = assertIntParameter(optarg, -1, -1);
                     break;
-                case 'f':
-                    config.fontName = optarg;
-                    break;
-                case 'h':
-                    exitWithUsage(0);
                 case 'l':
                     config.lineSpacing = assertIntParameter(optarg, 0, -1);
                     break;
@@ -314,14 +327,18 @@ Config Config::fromParameters(int argc, char** argv)
                 case 'o':
                     config.orientation = assertOrientationParameter(optarg);
                     break;
-                case 'p':
-                    config.colorProfile = assertProfileParameter(optarg);
+
+                // Font
+                case 'f':
+                    config.fontName = optarg;
                     break;
                 case 's':
                     config.fontSize = assertIntParameter(optarg, 1, -1);
                     break;
-                case 't':
-                    config.mouseOverTolerance = assertIntParameter(optarg, 0, -1);
+
+                // Colors
+                case 'p':
+                    config.colorProfile = assertProfileParameter(optarg);
                     break;
                 case SHORT_OPT_FG_COLOR:
                     assertAnsiColorParameter(optarg, config.colorProfile);
@@ -337,9 +354,19 @@ Config Config::fromParameters(int argc, char** argv)
                 case SHORT_OPT_BG_ALPHA:
                     config.defaultBackgroundColor.a = assertIntParameter(optarg, 0, 255);
                     break;
-                case 'v':
-                    config.verbose = true;
+
+                // Behavior
+                case 'd':
+                    config.mouseOverDimming = assertIntParameter(optarg, 0, 100);
                     break;
+                case 'D':
+                    config.dimming = assertIntParameter(optarg, 0, 100);
+                    break;
+                case 't':
+                    config.mouseOverTolerance = assertIntParameter(optarg, 0, -1);
+                    break;
+
+                // other
                 case 1:
                     config.inputFile = optarg;
                     break;
@@ -352,8 +379,10 @@ Config Config::fromParameters(int argc, char** argv)
     }
     catch(std::runtime_error const& e)
     {
-        std::string option = lookupLongOptionName(long_opts, opt);
-        std::cout << "ERROR: option '" << option << "' " << e.what() << ", but was '" << optarg << "' " << std::endl;
+        std::string longOption = lookupLongOptionName(long_opts, opt);
+        std::string shortOption = opt < 127 ? std::string(1, opt) : "";
+        std::string seperator = !longOption.empty()  && !shortOption.empty() ? ", " : "";
+        std::cout << "ERROR: option '" << shortOption << seperator << longOption << "' " << e.what() << ", but was '" << optarg << "' " << std::endl;
         exit(1);
     }
 
@@ -493,14 +522,18 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                 return true;
             }
         }
-        if (section == SECTION_MOUSE_OVER) 
+        if (section == SECTION_BEHAVIOR) 
         {
-            if (key == SECTION_MOUSE_OVER_TOLERANCE) {
-                config.mouseOverTolerance = assertIntParameter(value, 0, -1);
+            if (key == SECTION_BEHAVIOR_DIMMING) {
+                config.dimming = assertIntParameter(value, 0, 100);
                 return true;
             }
-            if (key == SECTION_MOUSE_OVER_DIMMING) {
+            if (key == SECTION_BEHAVIOR_MOUSE_OVER_DIMMING) {
                 config.mouseOverDimming = assertIntParameter(value, 0, 100);
+                return true;
+            }
+            if (key == SECTION_BEHAVIOR_TOLERANCE) {
+                config.mouseOverTolerance = assertIntParameter(value, 0, -1);
                 return true;
             }
         }
