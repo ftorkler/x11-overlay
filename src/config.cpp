@@ -136,6 +136,13 @@ void Config::printSection(std::ostream& os, const std::string& section)
     os << "[" << section << "]" << std::endl;
 }
 
+void Config::exitWithVersionNumber()
+{
+    // print recent version parsed from CHANGELOG file at compile time
+    std::cout << "overlay " << VERSION << std::endl;
+    exit(0);
+}
+
 void Config::exitWithUsage(int exitCode)
 {
     std::cout << ""
@@ -144,6 +151,7 @@ void Config::exitWithUsage(int exitCode)
         "  -c, --config=FILE      file path to read configuration from\n"
         "  -h, --help             prints this help text\n"
         "  -v, --verbose          be verbose and print some debug output\n"
+        "  -V, --version          print version number and quit\n"
         "\n"
         "Positioning:\n"
         "  -e PIXEL               screen edge spacing in pixels; defaults to '0'\n"
@@ -282,11 +290,12 @@ Config Config::fromParameters(int argc, char** argv)
 {
     Config config;
 
-    const char* const short_opts = "-c:d:D:e:f:hl:m:o:p:s:t:v";
+    const char* const short_opts = "-c:d:D:e:f:hl:m:o:p:s:t:vV";
     const option long_opts[] = {
             {"config",    required_argument, nullptr, 'c'},
             {"help",      no_argument,       nullptr, 'h'},
             {"verbose",   no_argument,       nullptr, 'v'},
+            {"version",   no_argument,       nullptr, 'V'},
             {"font-name", required_argument, nullptr, 'f'},
             {"font-size", required_argument, nullptr, 's'},
             {"profile",   required_argument, nullptr, 'p'},
@@ -312,6 +321,9 @@ Config Config::fromParameters(int argc, char** argv)
                     exitWithUsage(0);
                 case 'v':
                     config.verbose = true;
+                    break;
+                case 'V':
+                    exitWithVersionNumber();
                     break;
 
                 // Positioning 

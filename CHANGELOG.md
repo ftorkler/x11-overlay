@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make background color configurable including alpha value for transparency.
 - Make general dimming configurable (and not only for mouse over behaviour) ([Issue #4](/../../issues/4)).
 - Clean up help screen and introduce long option parameters for most options.
+- Print version number via option parameter.
 
 ### Changed
 

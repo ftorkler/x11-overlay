@@ -55,6 +55,7 @@ usage: overlay [OPTIONS] <INPUT_FILE>
   -c, --config=FILE      file path to read configuration from
   -h, --help             prints this help text
   -v, --verbose          be verbose and print some debug output
+  -V, --version          print version number and quit
 
 Positioning:
   -e PIXEL               screen edge spacing in pixels; defaults to '0'

@@ -2,6 +2,7 @@ SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := bin
 TEST_SRC_DIR := test
+VERSION := $(shell grep -m1 -oP '## \[\K[^]]+' CHANGELOG.md)
 
 EXE := $(BIN_DIR)/overlay
 SRC := $(filter-out $(SRC_DIR)/overlay.cpp, $(wildcard $(SRC_DIR)/*.cpp))
@@ -10,7 +11,7 @@ TEST_EXE := $(BIN_DIR)/run_tests
 TEST_SRC := $(filter-out $(TEST_SRC_DIR)/test.cpp, $(wildcard $(TEST_SRC_DIR)/*.cpp))
 TEST_OBJ := $(TEST_SRC:$(TEST_SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-CPPFLAGS := -Iinclude -MMD -MP
+CPPFLAGS := -Iinclude -MMD -MP -D VERSION="\"$(VERSION)\""
 CFLAGS   := -Wall `pkg-config --cflags freetype2`
 LDFLAGS  :=
 LDLIBS   := -lX11 -lXext -lXfixes -lXrandr -lXft -lfreetype

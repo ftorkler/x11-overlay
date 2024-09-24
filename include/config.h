@@ -49,6 +49,7 @@ public:
     static Config fromFile(const std::string& filename, bool suppressWarning = false);
 
     static std::string getDefaultConfigFilePath();
+    static void exitWithVersionNumber();
     static void exitWithUsage(int exitCode);
 
 private:
