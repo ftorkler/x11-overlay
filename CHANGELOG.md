@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Reposition overlay when monitor resoultion is changed.
+- File changes are watched by the file system and the input file is now only reloaded when neccessary.
 
 ## [0.3.0] - 2024-09-24
 

@@ -6,22 +6,15 @@
 
 #include "config.h"
 #include "gui.h"
+#include "inotify.h"
 
 
 #define LINE_LIMIT 100
-#define CHECK_FILE_INTERVAL_MS 1000
 #define CHECK_GUI_INTERVAL_MS 50
 
 Gui* gui = nullptr;
 bool running = true;
-unsigned long lastRead = 0;
 
-
-unsigned long clockMillis() 
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>
-        (std::chrono::system_clock::now().time_since_epoch()).count();
-}
 
 void sleepMillis(unsigned long millis)
 {
@@ -44,7 +37,7 @@ void catchSigterm()
    sigaction(SIGINT, &sigIntHandler, nullptr);
 }
 
-void checkInputFile(const std::string& filename)
+void loadInputFile(const std::string& filename)
 {
     gui->clearMessages();
     
@@ -85,6 +78,7 @@ int main(int argc, char* argv[])
     catchSigterm();
 
     Config config = readConfig(argc, argv);
+    Inotify inotify = Inotify(config.inputFile);
 
     gui = new Gui();
     // Postioning
@@ -103,16 +97,15 @@ int main(int argc, char* argv[])
     gui->setMouseOverDimming(config.mouseOverDimming / 100.0f);
     gui->setMouseOverTolerance(config.mouseOverTolerance);
 
+    loadInputFile(config.inputFile);
+
     while (running)
     {
-        unsigned long now = clockMillis();
-        if (now - lastRead >= CHECK_FILE_INTERVAL_MS) {
-            checkInputFile(config.inputFile);
-            lastRead = now;
+        if (inotify.hasFileBeenRewritten()) {
+            loadInputFile(config.inputFile);
         }
 
         gui->flush();
-
         sleepMillis(CHECK_GUI_INTERVAL_MS);
     }
 
