@@ -18,6 +18,7 @@ public:
     ~X11Window();
 
     void setActiveMonitor(int monitorIndex);
+    void updateActiveMonitor();
     unsigned int getMonitorWidth() const;
     unsigned int getMonitorHeight() const;
     unsigned int getWidth() const;
@@ -47,6 +48,7 @@ private:
     Window window;
     XVisualInfo visualInfo;
     XRRMonitorInfo monitor;
+    int monitorIndex;
 
     XEvent event;
 };

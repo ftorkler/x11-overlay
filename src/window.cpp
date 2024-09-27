@@ -12,7 +12,8 @@ X11Window::X11Window(int x, int y, unsigned int width, unsigned int height)
     y(y),
     width(width),
     height(height),
-    monitor()
+    monitor(),
+    monitorIndex(-1)
 {
     createWindowContext();
     setActiveMonitor(0);
@@ -55,16 +56,26 @@ void X11Window::createWindowContext()
 
 void X11Window::setActiveMonitor(int monitorIndex)
 {
+    if (this->monitorIndex != monitorIndex) {
+        this->monitorIndex = monitorIndex;
+        updateActiveMonitor();
+    }
+}
+
+void X11Window::updateActiveMonitor()
+{
     int monitorCount;
     XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
 
     int index = std::min(monitorIndex, monitorCount - 1);
-    monitor.x = monitors[index].x;
-    monitor.y = monitors[index].y;
     monitor.width = monitors[index].width;
     monitor.height = monitors[index].height;
-
-    move(x, y);
+    if (monitor.x != monitors[index].x || monitor.y != monitors[index].y) {
+        monitor.x = monitors[index].x;
+        monitor.y = monitors[index].y;
+        XMoveWindow(display, window, monitor.x + x, monitor.y + y);
+    }
+    XRRFreeMonitors(monitors);
 }
 
 unsigned int X11Window::getWidth() const
@@ -89,14 +100,16 @@ unsigned int X11Window::getMonitorHeight() const
 
 void X11Window::move(int x, int y)
 {
-    this->x = x;
-    this->y = y;
-    XMoveWindow(display, window, monitor.x + x, monitor.y + y);
+    if (this->x != x || this->y != y) {
+        this->x = x;
+        this->y = y;
+        XMoveWindow(display, window, monitor.x + x, monitor.y + y);
+    }
 }
 
 void X11Window::resize(unsigned int width, unsigned int height)
 {
-    if (this->window != width || this->height != height) {
+    if (this->width != width || this->height != height) {
         this->width = width;
         this->height = height;
         XResizeWindow(display, window, width, height);

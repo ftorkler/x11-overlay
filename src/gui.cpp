@@ -124,6 +124,7 @@ void Gui::flush()
     window->clear();
 
     if (w > 0 && h > 0) {
+        window->updateActiveMonitor();
         window->resize(w, h);
         updateWindowPosition();
 
