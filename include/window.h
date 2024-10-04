@@ -18,7 +18,7 @@ public:
     ~X11Window();
 
     void setActiveMonitor(int monitorIndex);
-    void updateActiveMonitor();
+    bool updateActiveMonitor();
     unsigned int getMonitorWidth() const;
     unsigned int getMonitorHeight() const;
     unsigned int getWidth() const;

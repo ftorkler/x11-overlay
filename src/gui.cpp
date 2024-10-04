@@ -50,6 +50,7 @@ void Gui::setDefaultBackgroundColor(const Color& color)
 
 void Gui::setColorProfile(Ansi::Profile profile)
 {
+    redraw = true;
     colorProfile = profile;
 }
 
@@ -100,6 +101,7 @@ void Gui::setMonitorIndex(unsigned int index)
 
 void Gui::setFont(const std::string& font)
 {
+    redraw = true;
     canvas->setFont(font);
 }
 
@@ -108,23 +110,19 @@ void Gui::flush()
     int w = messageMaxWidth;
     int h = messageY;
 
-    if (recalc) {
-        // TODO recalculation of individual line positions (or simply reinsert all messages once again?)
-        recalc = false;
-    }
-
     bool currentMouseOver = isMouseOver();
     redraw |= mouseOver != currentMouseOver;
+    redraw |= window->updateActiveMonitor();
     mouseOver = currentMouseOver;
 
-    if (!redraw) {
+    if (!redraw && !recalc) {
         return;
     }
+    recalc = false; // TODO recalculation of individual line positions (or simply reinsert all messages once again?)
 
     window->clear();
 
     if (w > 0 && h > 0) {
-        window->updateActiveMonitor();
         window->resize(w, h);
         updateWindowPosition();
 

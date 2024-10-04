@@ -62,20 +62,26 @@ void X11Window::setActiveMonitor(int monitorIndex)
     }
 }
 
-void X11Window::updateActiveMonitor()
+bool X11Window::updateActiveMonitor()
 {
     int monitorCount;
     XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
 
     int index = std::min(monitorIndex, monitorCount - 1);
-    monitor.width = monitors[index].width;
-    monitor.height = monitors[index].height;
-    if (monitor.x != monitors[index].x || monitor.y != monitors[index].y) {
+    bool isUpdated = 
+        monitor.x != monitors[index].x || 
+        monitor.y != monitors[index].y ||
+        monitor.width != monitors[index].width ||
+        monitor.height != monitors[index].height;
+    if (isUpdated) {
         monitor.x = monitors[index].x;
         monitor.y = monitors[index].y;
+        monitor.width = monitors[index].width;
+        monitor.height = monitors[index].height;
         XMoveWindow(display, window, monitor.x + x, monitor.y + y);
     }
     XRRFreeMonitors(monitors);
+    return isUpdated;
 }
 
 unsigned int X11Window::getWidth() const
