@@ -2,6 +2,7 @@
 
 #include "test_ansi.h"
 #include "test_config.h"
+#include "test_gui.h"
 
 TEST_LIST = {
    { "should return correct color for 8bit code (256 colors)", &TestAnsi::test_to_8bit_color },
@@ -16,6 +17,9 @@ TEST_LIST = {
    { "should parse key-value pair in config line (string)", &TestConfig::test_parseKeyValueLine_forString },
    { "should parse key-value pair in config line (orientation)", &TestConfig::test_parseKeyValueLine_forOrientation },
    { "should parse config from file", &TestConfig::test_fromFile },
+
+   { "should return trim for orientation", &TestGui::test_trimForOrientation },
+   { "should return trim for removed linefeeds and applied tabs", &TestGui::test_trimLinefeedsAndApplyTabs },
 
    { nullptr, nullptr } /* zeroed record marking the end of the list */
 };

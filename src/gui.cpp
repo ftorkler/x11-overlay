@@ -1,6 +1,7 @@
 #include "gui.h"
 
 #include <cstddef>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -165,7 +166,7 @@ void Gui::addMessage(const std::string& message)
 {
     redraw = true;
 
-    std::string trimmedMessage = trimForOrientation(message);
+    std::string trimmedMessage = trimForOrientation(trimLinefeedsAndApplyTabs(message));
 
     Dimesion dim = canvas->getStringDimension(trimmedMessage);
 
@@ -236,26 +237,73 @@ void Gui::addMessage(const std::string& message)
     messageY += dim.h + lineSpacing;
 }
 
-std::string Gui::trimForOrientation(const std::string& text) const
+const std::string Gui::trimLinefeedsAndApplyTabs(const std::string& text) const
 {
-    if (orientation != Orientation::NW &&
-        orientation != Orientation::W &&
-        orientation != Orientation::SW)
-    {
-        size_t start = text.find_first_not_of(" ");
-        std::string mutableText = (start == std::string::npos) ? "" : text.substr(start);
+    std::stringstream ss;
+    int ss_size = 0;
 
-        if (orientation == Orientation::NE ||
-            orientation == Orientation::E ||
-            orientation == Orientation::SE)
-        {
-            for (int i=0; i<(int)start; ++i) {
-                mutableText.append(" ");
-            }
+    for (size_t i=0; i<text.length(); ++i) {
+        const char c = text[i];
+        switch (c) {
+            case '\r':
+            case '\n':
+                break;
+            case '\t':
+                if (ss_size % 4 == 0) {
+                    ss_size += 4;
+                    ss << "    ";
+                }
+                while (ss_size % 4 != 0) {
+                    ++ss_size;
+                    ss << " ";
+                }
+                break;
+            default:
+                ss << c;
+                ++ss_size;
         }
-        return mutableText;
     }
-    return text;
+    return ss.str();
+}
+
+const std::string Gui::trimForOrientation(const std::string& text) const
+{
+    // Original: "<L>TEXT<R>"  (<L/R> Indentation)
+    // West:     "<L>TEXT<R>"
+    // Center:   "TEXT"
+    // East:     "<R>TEXT<L>"
+
+    if (orientation == Orientation::NW ||
+        orientation == Orientation::W ||
+        orientation == Orientation::SW)
+    {
+        return text;
+    }
+
+    size_t start = text.find_first_not_of(" ");
+    size_t end = text.find_last_not_of(" ");
+
+    if (start == 0 && end == text.length()-1) {
+        return text;
+    }
+    if (start == std::string::npos) {
+        start = 0;
+    }
+    if (end == std::string::npos) {
+        end = text.length()-1;
+    }
+
+    if (orientation == Orientation::N ||
+        orientation == Orientation::CENTER ||
+        orientation == Orientation::S)
+    {
+        return text.substr(start, end+1-start);
+    }
+
+    std::string left = text.substr(0, start);
+    std::string middle = text.substr(start, end+1-start);
+    std::string right = text.substr(end+1);
+    return right + middle + left;
 }
 
 bool Gui::isMouseOver() const
