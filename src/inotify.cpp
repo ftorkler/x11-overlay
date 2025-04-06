@@ -1,9 +1,14 @@
 #include "inotify.h"
 
+#include <bits/types/struct_timeval.h>
 #include <climits>
+#include <cstdlib>
 #include <iostream>
-#include <unistd.h>
+#include <linux/limits.h>
+#include <string>
 #include <sys/inotify.h>
+#include <sys/select.h>
+#include <unistd.h>
 
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
 

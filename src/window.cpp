@@ -1,13 +1,21 @@
 #include "window.h"
 
-#include <iostream>
-#include <X11/extensions/shape.h>
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/Xrandr.h>
+#include <X11/extensions/shape.h>
+#include <X11/extensions/shapeconst.h>
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
 
 #include "canvas.h"
+#include "pair.h"
 
-X11Window::X11Window(int x, int y, unsigned int width, unsigned int height) 
-: 
+X11Window::X11Window(int x, int y, unsigned int width, unsigned int height)
+:
     x(x),
     y(y),
     width(width),
@@ -19,14 +27,14 @@ X11Window::X11Window(int x, int y, unsigned int width, unsigned int height)
     setActiveMonitor(0);
 }
 
-X11Window::~X11Window() 
+X11Window::~X11Window()
 {
     XDestroyWindow(display, window);
     XCloseDisplay(display);
 }
 
-void X11Window::createWindowContext() 
-{   
+void X11Window::createWindowContext()
+{
     display = XOpenDisplay(getenv("DISPLAY"));
     if (!display) {
         std::cout << "opening X display... FAILED" << std::endl;
@@ -68,8 +76,8 @@ bool X11Window::updateActiveMonitor()
     XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
 
     int index = std::min(monitorIndex, monitorCount - 1);
-    bool isUpdated = 
-        monitor.x != monitors[index].x || 
+    bool isUpdated =
+        monitor.x != monitors[index].x ||
         monitor.y != monitors[index].y ||
         monitor.width != monitors[index].width ||
         monitor.height != monitors[index].height;
@@ -122,7 +130,7 @@ void X11Window::resize(unsigned int width, unsigned int height)
     }
 }
 
-X11Canvas* X11Window::createCanvas() const 
+X11Canvas* X11Window::createCanvas() const
 {
     return new X11Canvas(display, window, visualInfo.visual, screen);
 }

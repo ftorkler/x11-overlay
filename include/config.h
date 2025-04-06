@@ -10,7 +10,7 @@
 
 struct option;
 
-class Config 
+class Config
 {
 
 public:
@@ -70,7 +70,7 @@ private:
     static bool parseKeyValueLine(std::string line, std::string section, Config& config);
 
     static void printSection(std::ostream& os, const std::string& section);
-    template <typename T> 
+    template <typename T>
     static void printSectionKeyValue(std::ostream& os, const std::string& key, const T& value)
     {
         os << key << "=" << value << std::endl;

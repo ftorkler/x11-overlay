@@ -3,6 +3,8 @@
 #include "acutest.h"
 #include <algorithm>
 #include <string>
+#include <type_traits>
+#include <vector>
 
 #include "ansi.h"
 #include "color.h"
@@ -11,7 +13,7 @@ void check_to_8bit_color(int givenCode, Color expectedColor)
 {
 	Color fallbackColor = Color(255, 255, 255, 255);
 	Color color = Ansi::_to8bitColor(givenCode, fallbackColor);
-	TEST_CHECK_(color == expectedColor, "fromAnsi8bit(%d) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)", 
+	TEST_CHECK_(color == expectedColor, "fromAnsi8bit(%d) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)",
 		givenCode,
 		color.r, color.g, color.b, color.a,
 		expectedColor.r, expectedColor.g, expectedColor.b, expectedColor.a);
@@ -21,7 +23,7 @@ void check_to_color(std::string givenCode, Color expectedColor, bool increaseInt
 {
 	Color fallbackColor = Color(255, 255, 255, 255);
 	Color color = Ansi::toColor(givenCode, fallbackColor, increaseIntensity);
-	TEST_CHECK_(color == expectedColor, "fromAnsi(ESC%s) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)", 
+	TEST_CHECK_(color == expectedColor, "fromAnsi(ESC%s) was (%d,%d,%d,%d), but expected to be (%d,%d,%d,%d)",
 		givenCode.substr(1).c_str(),
 		color.r, color.g, color.b, color.a,
 		expectedColor.r, expectedColor.g, expectedColor.b, expectedColor.a);
@@ -32,12 +34,12 @@ void TestAnsi::test_to_8bit_color()
 	// for code not range [0..255] (fallback)
 	check_to_8bit_color(-1, Color(255, 255, 255));
 	check_to_8bit_color(256, Color(255, 255, 255));
-	
+
 	// for some random codes in range [0..15] (pallete)
 	check_to_8bit_color(0, Color(0, 0, 0));
 	check_to_8bit_color(7, Color(192, 192, 192));
 	check_to_8bit_color(15, Color(255, 255, 255));
-	
+
 	// for some random code in range [16..231] (rgb)
 	check_to_8bit_color(16, Color(0, 0, 0));
 	check_to_8bit_color(22, Color(0, 95, 0));
@@ -116,18 +118,18 @@ void TestAnsi::test_to_color()
 
 	// 24bit
 	check_to_color("\e[38;2;1;13;145m", Color(1, 13, 145));         // colorprofile <none>
-	check_to_color("\e[38;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0' 
-	check_to_color("\e[38;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1' 
+	check_to_color("\e[38;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0'
+	check_to_color("\e[38;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1'
 	check_to_color("\e[48;2;1;13;145m", Color(1, 13, 145));         // colorprofile <none>
-	check_to_color("\e[48;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0' 
-	check_to_color("\e[48;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1' 
+	check_to_color("\e[48;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0'
+	check_to_color("\e[48;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1'
 
 
 	check_to_color("\e[38;2;0;0;256m", Color(255, 255, 255)); 		// out of range -> fallback color
 	check_to_color("\e[38;2;0;0;-1m", Color(255, 255, 255));  		// out of range -> fallback color
-	check_to_color("\e[38;2;0;0;255m", Color(0, 0, 255));			// in range 
+	check_to_color("\e[38;2;0;0;255m", Color(0, 0, 255));			// in range
 	check_to_color("\e[38;2;0;0;0m", Color(0, 0, 0));				// in range
-	check_to_color("\e[48;2;0;0;255m", Color(0, 0, 255));			// in range 
+	check_to_color("\e[48;2;0;0;255m", Color(0, 0, 255));			// in range
 	check_to_color("\e[48;2;0;0;0m", Color(0, 0, 0));				// in range
 }
 
@@ -139,10 +141,10 @@ void TEST_EQUAL(std::string given, std::string expected)
     TEST_CHECK_(given == expected, "expected '%s', but was '%s'", expected.c_str(), given.c_str());
 }
 
-void TestAnsi::test_split() 
+void TestAnsi::test_split()
 {
     std::vector<std::string> tokens;
-    
+
 	/* don't split text */
 	TEST_CASE("don't split text");
     tokens = Ansi::split("text without colors");
@@ -196,10 +198,10 @@ void checkNoSplit(std::string text)
     TEST_CHECK(tokens[0] == text);
 }
 
-void TestAnsi::test_subsplit() 
+void TestAnsi::test_subsplit()
 {
 	std::vector<std::string> tokens;
-    
+
 	/* don't split text */
 	TEST_CASE("don't split text");
     Ansi::subsplit("normal text", &tokens);

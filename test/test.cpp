@@ -16,6 +16,6 @@ TEST_LIST = {
    { "should parse key-value pair in config line (string)", &TestConfig::test_parseKeyValueLine_forString },
    { "should parse key-value pair in config line (orientation)", &TestConfig::test_parseKeyValueLine_forOrientation },
    { "should parse config from file", &TestConfig::test_fromFile },
-   
-   { NULL, NULL } /* zeroed record marking the end of the list */
+
+   { nullptr, nullptr } /* zeroed record marking the end of the list */
 };

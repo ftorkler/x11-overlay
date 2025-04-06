@@ -2,6 +2,7 @@
 #include <fstream>
 #include <chrono>
 #include <signal.h>
+#include <string>
 #include <thread>
 
 #include "config.h"
@@ -40,7 +41,7 @@ void catchSigterm()
 void loadInputFile(const std::string& filename)
 {
     gui->clearMessages();
-    
+
     std::ifstream filein(filename, std::ifstream::in);
     int i = 0;
     for (std::string line; std::getline(filein, line) && i < LINE_LIMIT; ++i) {
@@ -51,9 +52,9 @@ void loadInputFile(const std::string& filename)
 
 Config readConfig(int argc, char* argv[])
 {
-    Config configFromParameters = Config::fromParameters(argc, argv);   
-    Config configFromFile = configFromParameters.configFile != "" 
-        ? Config::fromFile(configFromParameters.configFile, false) 
+    Config configFromParameters = Config::fromParameters(argc, argv);
+    Config configFromFile = configFromParameters.configFile != ""
+        ? Config::fromFile(configFromParameters.configFile, false)
         : Config::fromFile(Config::getDefaultConfigFilePath(), true);
 
     Config config = Config::defaultConfig()

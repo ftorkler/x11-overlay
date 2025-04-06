@@ -39,7 +39,7 @@ public:
     static Profile profileFromString(const std::string& input);
 
     static Color toColor(const std::string &ansi, Color fallbackColor, bool increaseIntensity = false, Profile profile = Profile::XP);
- 
+
     static Sequence parseControlSequence(const std::string& text);
 
     static std::vector<std::string> split(const std::string text);

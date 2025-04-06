@@ -1,10 +1,12 @@
 #include "test_config.h"
 
 #include "acutest.h"
-#include <algorithm>
-#include <iostream>
+#include <stdexcept>
 #include <string>
+#include <unistd.h>
 
+#include "ansi.h"
+#include "color.h"
 #include "config.h"
 #include "gui.h"
 

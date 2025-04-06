@@ -1,16 +1,19 @@
 #include "gui.h"
 
-#include <algorithm>
-#include <iostream>
+#include <cstddef>
+#include <string>
+#include <vector>
 
 #include "ansi.h"
 #include "canvas.h"
+#include "color.h"
+#include "pair.h"
 #include "window.h"
 
 Gui::Gui()
 :
     orientation(Orientation::NW),
-    messageY(0), 
+    messageY(0),
     messageMaxWidth(0),
     mouseOver(false),
     redraw(true),
@@ -72,7 +75,7 @@ void Gui::setMouseOverTolerance(unsigned int tolerance)
     mouseOverTolerance = tolerance;
 }
 
-void Gui::setOrientation(Orientation orientation) 
+void Gui::setOrientation(Orientation orientation)
 {
     redraw = true;
     recalc = true;
@@ -144,7 +147,7 @@ void Gui::flush()
     redraw = false;
 }
 
-void Gui::clearMessages() 
+void Gui::clearMessages()
 {
     redraw = true;
     increaseIntensity = false;
@@ -158,7 +161,7 @@ void Gui::clearMessages()
     clippingBoxes.clear();
 }
 
-void Gui::addMessage(const std::string& message) 
+void Gui::addMessage(const std::string& message)
 {
     redraw = true;
 
@@ -169,7 +172,7 @@ void Gui::addMessage(const std::string& message)
     if (!trimmedMessage.empty()) {
 
         std::vector<std::string> chunks = Ansi::split(trimmedMessage);
-        
+
         int w = 0;
         for (auto chunk : chunks) {
             w += Ansi::parseControlSequence(chunk) == Ansi::Sequence::NONE ? canvas->getStringDimension(chunk).w : 0;
@@ -235,16 +238,16 @@ void Gui::addMessage(const std::string& message)
 
 std::string Gui::trimForOrientation(const std::string& text) const
 {
-    if (orientation != Orientation::NW && 
-        orientation != Orientation::W && 
-        orientation != Orientation::SW) 
+    if (orientation != Orientation::NW &&
+        orientation != Orientation::W &&
+        orientation != Orientation::SW)
     {
         size_t start = text.find_first_not_of(" ");
         std::string mutableText = (start == std::string::npos) ? "" : text.substr(start);
 
-        if (orientation == Orientation::NE || 
-            orientation == Orientation::E || 
-            orientation == Orientation::SE) 
+        if (orientation == Orientation::NE ||
+            orientation == Orientation::E ||
+            orientation == Orientation::SE)
         {
             for (int i=0; i<(int)start; ++i) {
                 mutableText.append(" ");
@@ -262,18 +265,18 @@ bool Gui::isMouseOver() const
     int t = mouseOverTolerance;
 
     Position pos = window->getMousePosition();
-    bool isInFrame = 
-        pos.x + t >= 0 && 
-        pos.y + t >= 0 && 
-        pos.x - t < w && 
+    bool isInFrame =
+        pos.x + t >= 0 &&
+        pos.y + t >= 0 &&
+        pos.x - t < w &&
         pos.y - t < h;
-        
+
     if (isInFrame) {
         int offsetX = calcXforOrientation(0, messageMaxWidth, 0);
         for (auto box : clippingBoxes) {
-            if (pos.x + t >= box.x + offsetX && 
-                pos.y + t >= box.y && 
-                pos.x - t <= box.x + offsetX + (int)box.w && 
+            if (pos.x + t >= box.x + offsetX &&
+                pos.y + t >= box.y &&
+                pos.x - t <= box.x + offsetX + (int)box.w &&
                 pos.y - t <= box.y + (int)box.h)
             {
                 return true;

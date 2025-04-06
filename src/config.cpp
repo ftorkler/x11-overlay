@@ -1,13 +1,20 @@
 #include "config.h"
-#include "ansi.h"
 
+#include <bits/getopt_core.h>
+#include <cstdlib>
 #include <getopt.h>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <limits.h>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <unistd.h>
 #include <pwd.h>
+
+#include "ansi.h"
+#include "color.h"
+#include "gui.h"
 
 static constexpr const int SHORT_OPT_FG_COLOR = 1000;
 static constexpr const int SHORT_OPT_FG_ALPHA = 1001;
@@ -246,7 +253,7 @@ int Config::assertIntParameter(const std::string& param, int min, int max)
     return value;
 }
 
-Color Config::assertAnsiColorParameter(const std::string& param, Ansi::Profile colorProfile) 
+Color Config::assertAnsiColorParameter(const std::string& param, Ansi::Profile colorProfile)
 {
     std::string colorSequence;
     if (param.find(ANSI_START) != 0) {
@@ -308,7 +315,7 @@ Config Config::fromParameters(int argc, char** argv)
     };
 
     int opt;
-    try 
+    try
     {
         while((opt = getopt_long(argc, argv, short_opts, long_opts, nullptr)) != -1)
         {
@@ -326,7 +333,7 @@ Config Config::fromParameters(int argc, char** argv)
                     exitWithVersionNumber();
                     break;
 
-                // Positioning 
+                // Positioning
                 case 'e':
                     config.screenEdgeSpacing = assertIntParameter(optarg, -1, -1);
                     break;
@@ -479,7 +486,7 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                 return true;
             }
         }
-        if (section == SECTION_POSITIONING) 
+        if (section == SECTION_POSITIONING)
         {
             if (key == SECTION_POSITIONING_MONITOR_INDEX) {
                 config.monitorIndex = assertIntParameter(value, 0, -1);
@@ -498,7 +505,7 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                 return true;
             }
         }
-        if (section == SECTION_FONT) 
+        if (section == SECTION_FONT)
         {
             if (key == SECTION_FONT_NAME) {
                 config.fontName = value;
@@ -509,7 +516,7 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                 return true;
             }
         }
-        if (section == SECTION_COLORS) 
+        if (section == SECTION_COLORS)
         {
             if (key == SECTION_COLORS_ANSI_PROFILE) {
                 config.colorProfile = assertProfileParameter(value);
@@ -534,7 +541,7 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
                 return true;
             }
         }
-        if (section == SECTION_BEHAVIOR) 
+        if (section == SECTION_BEHAVIOR)
         {
             if (key == SECTION_BEHAVIOR_DIMMING) {
                 config.dimming = assertIntParameter(value, 0, 100);
@@ -566,7 +573,7 @@ std::string Config::getDefaultConfigFilePath()
 {
     const char* home;
     if ((home = getenv("HOME")) != nullptr ||
-        (home = getpwuid(getuid())->pw_dir) != nullptr) 
+        (home = getpwuid(getuid())->pw_dir) != nullptr)
     {
         return std::string(home) + "/.config/x11-overlayrc";
     }

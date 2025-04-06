@@ -1,6 +1,16 @@
 #include "canvas.h"
 
+#include <X11/X.h>
+#include <X11/Xft/Xft.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/Xrender.h>
+#include <cstdlib>
+#include <fontconfig/fontconfig.h>
 #include <iostream>
+#include <string>
+
+#include "color.h"
+#include "pair.h"
 
 X11Canvas::X11Canvas(Display* display, Window window, Visual* visual, int screen)
 :
@@ -49,7 +59,7 @@ void X11Canvas::setColor(const Color& color)
     if (newColor.red != oldColor.red ||
         newColor.green != oldColor.green ||
         newColor.blue != oldColor.blue ||
-        newColor.alpha != oldColor.alpha) 
+        newColor.alpha != oldColor.alpha)
     {
         XftColorFree(display, visual, colormap, &xftColor);
         if (!XftColorAllocValue(display, visual, colormap, &newColor, &xftColor)) {
