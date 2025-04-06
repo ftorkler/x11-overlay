@@ -166,7 +166,7 @@ void Gui::addMessage(const std::string& message)
 {
     redraw = true;
 
-    std::string trimmedMessage = trimForOrientation(trimLinefeedsAndApplyTabs(message));
+    std::string trimmedMessage = trimForOrientation(orientation, trimLinefeedsAndApplyTabs(message));
 
     Dimesion dim = canvas->getStringDimension(trimmedMessage);
 
@@ -237,7 +237,7 @@ void Gui::addMessage(const std::string& message)
     messageY += dim.h + lineSpacing;
 }
 
-const std::string Gui::trimLinefeedsAndApplyTabs(const std::string& text) const
+const std::string Gui::trimLinefeedsAndApplyTabs(const std::string& text)
 {
     std::stringstream ss;
     int ss_size = 0;
@@ -266,7 +266,7 @@ const std::string Gui::trimLinefeedsAndApplyTabs(const std::string& text) const
     return ss.str();
 }
 
-const std::string Gui::trimForOrientation(const std::string& text) const
+const std::string Gui::trimForOrientation(const Orientation orientation, const std::string& text)
 {
     // Original: "<L>TEXT<R>"  (<L/R> Indentation)
     // West:     "<L>TEXT<R>"

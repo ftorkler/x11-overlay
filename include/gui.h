@@ -51,8 +51,8 @@ private:
         const unsigned int w, h;
     };
 
-    const std::string trimLinefeedsAndApplyTabs(const std::string& text) const;
-    const std::string trimForOrientation(const std::string& text) const;
+    static const std::string trimLinefeedsAndApplyTabs(const std::string& text);
+    static const std::string trimForOrientation(const Orientation orientation, const std::string& text);
     bool isMouseOver() const;
     int calcXforOrientation(unsigned int innerWidth, unsigned int outerWidth, unsigned int spacing) const;
     int calcYforOrientation(unsigned int innerHeight, unsigned int outerHeight, unsigned int spacing) const;
