@@ -243,16 +243,16 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
 
 std::vector<std::string> Ansi::split(const std::string text)
 {
-    char token[] = {
-        ANSI_START,
-        ANSI_END
+    std::string token[] = {
+        std::string(ANSI_INIT),
+        std::string(1, ANSI_END)
     };
 
     std::vector<std::string> result;
     size_t start = 0, end;
-    int i = text[0] == ANSI_START ? 1 : 0;
+    int i = (text[0] == ANSI_INIT[0] && text[1] == ANSI_INIT[1]) ? 1 : 0;
 
-    while ((end = text.find_first_of(token[i], start)) != std::string::npos) {
+    while ((end = text.find(token[i], start)) != std::string::npos) {
         end = end + i;
         subsplit(text.substr(start, end - start), &result);
 

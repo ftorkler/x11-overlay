@@ -9,6 +9,21 @@
 #include "ansi.h"
 #include "color.h"
 
+namespace
+{
+    void TEST_EQUAL(std::string given, std::string expected)
+    {
+    	std::replace(given.begin(), given.end(), '\e', '^');
+    	std::replace(expected.begin(), expected.end(), '\e', '^');
+        TEST_CHECK_(given == expected, "expected '%s', but was '%s'", expected.c_str(), given.c_str());
+    }
+
+    void TEST_ASSERT_EQUAL(int given, int expected)
+    {
+        TEST_ASSERT_(given == expected, "expected '%d', but was '%d'", expected, given);
+    }
+}
+
 void check_to_8bit_color(int givenCode, Color expectedColor)
 {
 	Color fallbackColor = Color(255, 255, 255, 255);
@@ -124,7 +139,6 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[48;2;0;128;12;1m", Color(128, 12, 1));       // colorprofile '0'
 	check_to_color("\e[48;2;1;128;128;128m", Color(128, 128, 128)); // colorprofile '1'
 
-
 	check_to_color("\e[38;2;0;0;256m", Color(255, 255, 255)); 		// out of range -> fallback color
 	check_to_color("\e[38;2;0;0;-1m", Color(255, 255, 255));  		// out of range -> fallback color
 	check_to_color("\e[38;2;0;0;255m", Color(0, 0, 255));			// in range
@@ -133,28 +147,32 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[48;2;0;0;0m", Color(0, 0, 0));				// in range
 }
 
-
-void TEST_EQUAL(std::string given, std::string expected)
-{
-	std::replace(given.begin(), given.end(), '\e', '^');
-	std::replace(expected.begin(), expected.end(), '\e', '^');
-    TEST_CHECK_(given == expected, "expected '%s', but was '%s'", expected.c_str(), given.c_str());
-}
-
 void TestAnsi::test_split()
 {
     std::vector<std::string> tokens;
 
+    /* handle single char */
+    TEST_CASE("handle single char");
+    tokens = Ansi::split("a");
+    TEST_ASSERT_EQUAL(tokens.size(), 1);
+    TEST_EQUAL(tokens[0], "a");
+
+    /* handle single special char */
+    TEST_CASE("handle single special char");
+    tokens = Ansi::split("\e");
+    TEST_ASSERT_EQUAL(tokens.size(), 1);
+    TEST_EQUAL(tokens[0], "\e");
+
 	/* don't split text */
 	TEST_CASE("don't split text");
     tokens = Ansi::split("text without colors");
-    TEST_ASSERT(tokens.size() == 1);
+    TEST_ASSERT_EQUAL(tokens.size(), 1);
     TEST_CHECK(tokens[0] == "text without colors");
 
 	/* split text with simple ansi control sequence inbetween */
     tokens = Ansi::split("text with \e[38;5;2mred\e[0m color");
 	TEST_CASE("split text with simple ansi control sequence inbetween");
-    TEST_ASSERT(tokens.size() == 5);
+    TEST_ASSERT_EQUAL(tokens.size(), 5);
     TEST_EQUAL(tokens[0], "text with ");
     TEST_EQUAL(tokens[1], "\e[38;5;2m");
     TEST_EQUAL(tokens[2], "red");
@@ -164,7 +182,7 @@ void TestAnsi::test_split()
 	/* split text with simple ansi control sequence at beginning */
 	tokens = Ansi::split("\e[38;5;2mtext with red\e[0m color");
 	TEST_CASE("split text with simple ansi control sequence at beginning");
-    TEST_ASSERT(tokens.size() == 4);
+    TEST_ASSERT_EQUAL(tokens.size(), 4);
     TEST_EQUAL(tokens[0], "\e[38;5;2m");
 	TEST_EQUAL(tokens[1], "text with red");
     TEST_EQUAL(tokens[2], "\e[0m");
@@ -173,7 +191,7 @@ void TestAnsi::test_split()
 	/* split text with simple ansi control sequence at beginning and end */
 	tokens = Ansi::split("\e[38;5;2mtext with red color\e[0m");
 	TEST_CASE("split text with simple ansi control sequence at beginning");
-    TEST_ASSERT(tokens.size() == 3);
+    TEST_ASSERT_EQUAL(tokens.size(), 3);
     TEST_EQUAL(tokens[0], "\e[38;5;2m");
 	TEST_EQUAL(tokens[1], "text with red color");
     TEST_EQUAL(tokens[2], "\e[0m");
@@ -181,20 +199,39 @@ void TestAnsi::test_split()
 	/* split complex ansi control sequence into simple ansi control sequences */
 	TEST_CASE("split complex into simple ansi control sequences");
 	tokens = Ansi::split("text \e[0;1;33;43m.");
-    TEST_ASSERT(tokens.size() == 6);
+    TEST_ASSERT_EQUAL(tokens.size(), 6);
 	TEST_EQUAL(tokens[0], "text ");
 	TEST_EQUAL(tokens[1], "\e[0m");
 	TEST_EQUAL(tokens[2], "\e[1m");
 	TEST_EQUAL(tokens[3], "\e[33m");
 	TEST_EQUAL(tokens[4], "\e[43m");
 	TEST_EQUAL(tokens[5], ".");
+
+	/* split ansi control sequences containing Operating System Command (OSC) and String Terminator (ST) */
+	TEST_CASE("split ansi control sequences containing Operating System Command (OSC) and String Terminator (ST)");
+	tokens = Ansi::split("\e]8;;http://example.com\e\\This is a link\e]8;;\e\\");
+	TEST_EQUAL(tokens[0], "\e]8;;http://example.com\e\\This is a link\e]8;;\e\\");
+
+	/* split mixed ansi control sequences containing Operating System Command (OSC) and String Terminator (ST) */
+	TEST_CASE("split mixed ansi control sequences containing terminal hyperlinks (OSC 8)");
+	tokens = Ansi::split("Link \e[0;94mExample:\e[0m \e]8;;http://example.com\e\\This is a link\e]8;;\e\\ \e[0;94mEnd\e[0m");
+	TEST_EQUAL(tokens[0], "Link ");
+	TEST_EQUAL(tokens[1], "\e[0m");
+	TEST_EQUAL(tokens[2], "\e[94m");
+	TEST_EQUAL(tokens[3], "Example:");
+	TEST_EQUAL(tokens[4], "\e[0m");
+	TEST_EQUAL(tokens[5], " \e]8;;http://example.com\e\\This is a link\e]8;;\e\\ ");
+	TEST_EQUAL(tokens[6], "\e[0m");
+	TEST_EQUAL(tokens[7], "\e[94m");
+	TEST_EQUAL(tokens[8], "End");
+	TEST_EQUAL(tokens[9], "\e[0m");
 }
 
 void checkNoSplit(std::string text)
 {
 	std::vector<std::string> tokens;
 	Ansi::subsplit(text, &tokens);
-    TEST_ASSERT(tokens.size() == 1);
+    TEST_ASSERT_EQUAL(tokens.size(), 1);
     TEST_CHECK(tokens[0] == text);
 }
 
@@ -205,7 +242,7 @@ void TestAnsi::test_subsplit()
 	/* don't split text */
 	TEST_CASE("don't split text");
     Ansi::subsplit("normal text", &tokens);
-    TEST_ASSERT(tokens.size() == 1);
+    TEST_ASSERT_EQUAL(tokens.size(), 1);
     TEST_CHECK(tokens[0] == "normal text");
 	tokens.clear();
 
@@ -218,13 +255,13 @@ void TestAnsi::test_subsplit()
 	/* split complex ansi sequence into two simple ones */
 	TEST_CASE("split complex ansi sequence into two simple ones");
 	Ansi::subsplit("\e[0;1m", &tokens);
-    TEST_ASSERT(tokens.size() == 2);
+    TEST_ASSERT_EQUAL(tokens.size(), 2);
     TEST_CHECK(tokens[0] == "\e[0m");
     TEST_CHECK(tokens[1] == "\e[1m");
 	tokens.clear();
 
 	Ansi::subsplit("\e[38;5;3;0m", &tokens);
-    TEST_ASSERT(tokens.size() == 2);
+    TEST_ASSERT_EQUAL(tokens.size(), 2);
     TEST_CHECK(tokens[0] == "\e[38;5;3m");
     TEST_CHECK(tokens[1] == "\e[0m");
 	tokens.clear();
@@ -292,6 +329,7 @@ void TestAnsi::test_parse_control_sequence()
 	TEST_EQUAL(Ansi::parseControlSequence(""), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("text"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\em"), Ansi::Sequence::NONE);
+	TEST_EQUAL(Ansi::parseControlSequence("\e]"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\e0;0m"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[m"), Ansi::Sequence::NONE);
 	TEST_EQUAL(Ansi::parseControlSequence("\e[38;5;2"), Ansi::Sequence::NONE);
