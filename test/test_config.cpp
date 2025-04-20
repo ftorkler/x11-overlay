@@ -136,10 +136,10 @@ void TestConfig::test_fromFile() {
 	TEST_CHECK(fileConfig.screenEdgeSpacing ==  10);
 	TEST_CHECK(fileConfig.lineSpacing != defaultConfig.lineSpacing);
 	TEST_CHECK(fileConfig.lineSpacing ==  20);
-	TEST_CHECK(fileConfig.fontName != defaultConfig.fontName);
-	TEST_CHECK(fileConfig.fontName == "Mx437 IBM VGA 8x16");
-	TEST_CHECK(fileConfig.fontSize != defaultConfig.fontSize);
-	TEST_CHECK(fileConfig.fontSize == 24);
+	TEST_CHECK(fileConfig.fontName[0] != defaultConfig.fontName[0]);
+	TEST_CHECK(fileConfig.fontName[0] == "Mx437 IBM VGA 8x16");
+	TEST_CHECK(fileConfig.fontSize[0] != defaultConfig.fontSize[0]);
+	TEST_CHECK(fileConfig.fontSize[0] == 24);
 	TEST_CHECK(fileConfig.colorProfile != defaultConfig.colorProfile);
 	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
 	TEST_CHECK(fileConfig.defaultForegroundColor != defaultConfig.defaultForegroundColor);
