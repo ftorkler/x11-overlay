@@ -44,8 +44,21 @@ void loadInputFile(const std::string& filename)
 
     std::ifstream filein(filename, std::ifstream::in);
     int i = 0;
+    int font_n=0, l_font_n;
+    char font_code[2];
+    font_code[1]=0;
     for (std::string line; std::getline(filein, line) && i < LINE_LIMIT; ++i) {
-        gui->addMessage(line);
+        font_code[0]=line[0];
+        if(isdigit(font_code[0]) and line[1]=='~') { // set font for this line and further
+            font_n=atoi(font_code);
+            line.erase(0,2);
+        }
+        l_font_n=font_n;
+        if(isdigit(font_code[0]) and line[1]=='!') { // set font just for this line
+            l_font_n=atoi(font_code);
+            line.erase(0,2);
+        }
+        gui->addMessage(l_font_n, line);
     }
     filein.close();
 }
@@ -88,7 +101,8 @@ int main(int argc, char* argv[])
     gui->setLineSpacing(config.lineSpacing);
     gui->setMonitorIndex(config.monitorIndex);
     // Font
-    gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
+    for(int i=0; i<10; i++)
+        gui->setFont(i, config.fontName[i] + "-" + std::to_string(config.fontSize[i]));
     // Colors
     gui->setColorProfile(config.colorProfile);
     gui->setDefaultForgroundColor(config.defaultForegroundColor);

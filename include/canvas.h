@@ -17,11 +17,11 @@ public:
     X11Canvas(Display* display, Window window, Visual* visual, int screen);
     ~X11Canvas();
 
-    void setFont(const std::string& fontname);
+    void setFont(int n, const std::string& fontname);
     void setColor(const Color& color);
     void drawRect(int x, int y, unsigned int w, unsigned int h) const;
-    void drawString(int x, int y, const std::string& text) const;
-    IntPair getStringDimension(const std::string& text) const;
+    void drawString(int x, int y, int font_n, const std::string& text) const;
+    IntPair getStringDimension(int font_n, const std::string& text) const;
 
 private:
 
@@ -30,7 +30,7 @@ private:
     Colormap colormap;
     int screen;
 
-    XftFont* xftFont;
+    XftFont* xftFonts[10];
     XftDraw* xftDraw;
     XftColor xftColor;
 
