@@ -31,8 +31,8 @@ public:
     int screenEdgeSpacing;
     int lineSpacing;
     // font
-    std::string fontName;
-    int fontSize;
+    std::string fontName[10];
+    int fontSize[10];
     // colors
     Ansi::Profile colorProfile;
     std::string tempDefaultForegroundColor;

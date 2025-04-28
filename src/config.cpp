@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
+#include <string.h>
 #include <pwd.h>
 
 #include "ansi.h"
@@ -53,9 +54,6 @@ Config::Config()
     orientation(Gui::Orientation::NONE),
     screenEdgeSpacing(INT_MIN),
     lineSpacing(INT_MIN),
-    // font
-    fontName(""),
-    fontSize(0),
     // colors
     colorProfile(Ansi::Profile::VGA),
     tempDefaultForegroundColor(""),
@@ -67,6 +65,11 @@ Config::Config()
     mouseOverDimming(INT_MIN),
     mouseOverTolerance(INT_MIN)
 {
+    // font
+    for(int i=0; i<10; i++) {
+        fontName[i]="";
+        fontSize[i]=0;
+    }
 }
 
 Config::~Config()
@@ -85,8 +88,10 @@ Config Config::overrideWith(const Config& other)
     if (other.screenEdgeSpacing != unsetConfig.screenEdgeSpacing) this->screenEdgeSpacing = other.screenEdgeSpacing;
     if (other.lineSpacing != unsetConfig.lineSpacing) this->lineSpacing = other.lineSpacing;
     // font
-    if (other.fontName != unsetConfig.fontName) this->fontName = other.fontName;
-    if (other.fontSize != unsetConfig.fontSize) this->fontSize = other.fontSize;
+    for(int i=0; i<10; i++) {
+        if (other.fontName[i] != unsetConfig.fontName[i]) this->fontName[i] = other.fontName[i];
+        if (other.fontSize[i] != unsetConfig.fontSize[i]) this->fontSize[i] = other.fontSize[i];
+    }
     // colors
     if (other.colorProfile != unsetConfig.colorProfile) this->colorProfile = other.colorProfile;
     if (other.tempDefaultForegroundColor != unsetConfig.tempDefaultForegroundColor) this->tempDefaultForegroundColor = other.tempDefaultForegroundColor;
@@ -197,9 +202,11 @@ Config Config::defaultConfig()
     config.orientation = Gui::Orientation::NW;
     config.screenEdgeSpacing = 0;
     config.lineSpacing = 0;
-    // font
-    config.fontName = "NotoSansMono";
-    config.fontSize = 12;
+    // font, init only font #0
+//    for(int i=0; i<10; i++) {
+    config.fontName[0] = "NotoSansMono";
+    config.fontSize[0] = 12;
+//    }
     // colors
     config.colorProfile = Ansi::Profile::VGA;
     config.tempDefaultForegroundColor = "";
@@ -349,10 +356,25 @@ Config Config::fromParameters(int argc, char** argv)
 
                 // Font
                 case 'f':
-                    config.fontName = optarg;
+//if start with [0-9]: use as font index
+                    if( isdigit(optarg[0]) && optarg[1]==':' ) {
+                        optarg[1]=0;
+                        int n = atoi(optarg);
+                        config.fontName[n] = optarg+2;
+                    } else {
+                        config.fontName[0] = optarg;
+                    }
+
                     break;
                 case 's':
-                    config.fontSize = assertIntParameter(optarg, 1, -1);
+//if start with [0-9]: use as font index
+                    if( isdigit(optarg[0]) && optarg[1]==':' ) {
+                        optarg[1]=0;
+                        int n = atoi(optarg);
+                        config.fontSize[n] = assertIntParameter(optarg+2, 1, -1);
+                    } else {
+                        config.fontSize[0] = assertIntParameter(optarg, 1, -1);
+                    }
                     break;
 
                 // Colors
@@ -466,6 +488,15 @@ bool Config::parseSectionLine(std::string line, std::string& section)
     return true;
 }
 
+            static int get_idx(const char*arg, const char*reference)
+            {
+                if(strlen(arg)!=(strlen(reference)+2)) return -1; // be sure that key has at least 2 extra chars
+                if(strncmp(arg, reference, strlen(reference))!=0) return -1; //something totally unrelated
+                if(arg[strlen(reference)] != '.') return -1; // index is like '.4'
+                if(isdigit(arg[strlen(reference)+1])) return -1; // index is digit 0..9
+                return atoi(arg+strlen(reference)+1); // use that that string ends with index digit
+            }
+
 bool Config::parseKeyValueLine(std::string line, std::string section, Config& config)
 {
     std::istringstream iss(line);
@@ -508,13 +539,30 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
         if (section == SECTION_FONT)
         {
             if (key == SECTION_FONT_NAME) {
-                config.fontName = value;
+                config.fontName[0] = value;
                 return true;
             }
             if (key == SECTION_FONT_SIZE) {
-                config.fontSize = assertIntParameter(value, 1, -1);
+                config.fontSize[0] = assertIntParameter(value, 1, -1);
                 return true;
             }
+
+            
+            int idx;
+
+            idx=get_idx(key.c_str(), SECTION_FONT_NAME);
+            if(0<=idx and idx<=9) {
+                config.fontName[idx] = value;
+                return true;
+            }
+
+            idx=get_idx(key.c_str(), SECTION_FONT_SIZE);
+            if(0<=idx and idx<=9) {
+                config.fontSize[idx] = assertIntParameter(value, 1, -1);
+                return true;
+            }
+            
+            
         }
         if (section == SECTION_COLORS)
         {

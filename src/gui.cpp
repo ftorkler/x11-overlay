@@ -103,10 +103,10 @@ void Gui::setMonitorIndex(unsigned int index)
     window->setActiveMonitor(index);
 }
 
-void Gui::setFont(const std::string& font)
+void Gui::setFont(int n, const std::string& font)
 {
     redraw = true;
-    canvas->setFont(font);
+    canvas->setFont(n, font);
 }
 
 void Gui::flush()
@@ -162,13 +162,16 @@ void Gui::clearMessages()
     clippingBoxes.clear();
 }
 
-void Gui::addMessage(const std::string& message)
+void Gui::addMessage(int font_n, const std::string& message)
 {
     redraw = true;
 
     std::string trimmedMessage = trimForOrientation(orientation, trimLinefeedsAndApplyTabs(message));
 
-    Dimesion dim = canvas->getStringDimension(trimmedMessage);
+    // messages added line by line, so here we can use first bytes of line as font selector.
+    // after font is choosed we can get dimension (not earlier!)
+
+    Dimesion dim = canvas->getStringDimension(font_n, trimmedMessage);
 
     if (!trimmedMessage.empty()) {
 
@@ -176,7 +179,7 @@ void Gui::addMessage(const std::string& message)
 
         int w = 0;
         for (auto chunk : chunks) {
-            w += Ansi::parseControlSequence(chunk) == Ansi::Sequence::NONE ? canvas->getStringDimension(chunk).w : 0;
+            w += Ansi::parseControlSequence(chunk) == Ansi::Sequence::NONE ? canvas->getStringDimension(font_n, chunk).w : 0;
         }
 
         int x = calcXforOrientation(w, 0, 0);
@@ -218,9 +221,9 @@ void Gui::addMessage(const std::string& message)
                 break;
             case Ansi::Sequence::NONE:
             {
-                int chunkW = canvas->getStringDimension(chunk).w;
+                int chunkW = canvas->getStringDimension(font_n, chunk).w;
                 drawBgCommands.emplace_back(new DrawRectCmd(x, messageY, chunkW, dim.h));
-                drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, chunk));
+                drawFgCommands.emplace_back(new DrawTextCmd(x, messageY, font_n, chunk));
                 x += chunkW;
                 break;
             }
@@ -434,16 +437,17 @@ void DrawRectCmd::draw(X11Canvas* canvas, int offsetX, float alpha) const
     canvas->drawRect(x + offsetX, y, w, h);
 }
 
-DrawTextCmd::DrawTextCmd(int x, int y, const std::string& text)
+DrawTextCmd::DrawTextCmd(int x, int y, int font_n, const std::string& text)
 :
     DrawCmd(),
     x(x),
     y(y),
+    font_n(font_n),
     text(text)
 {
 }
 
 void DrawTextCmd::draw(X11Canvas* canvas, int offsetX, float alpha) const
 {
-    canvas->drawString(x + offsetX, y, text);
+    canvas->drawString(x + offsetX, y, font_n, text);
 }

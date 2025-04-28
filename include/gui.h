@@ -34,11 +34,11 @@ public:
     void setScreenEdgeSpacing(unsigned int spacing);
     void setLineSpacing(unsigned int spacing);
     void setMonitorIndex(unsigned int index);
-    void setFont(const std::string& font);
+    void setFont(int n, const std::string& font);
 
     void flush();
     void clearMessages();
-    void addMessage(const std::string& message);
+    void addMessage(int font_n, const std::string& message);
 
     static std::string orientationToString(Orientation orientation);
     static Orientation orientationFromString(const std::string& input);
@@ -127,13 +127,13 @@ class DrawTextCmd : public DrawCmd
 
 public:
 
-    DrawTextCmd(int x, int y, const std::string& text);
+    DrawTextCmd(int x, int y, int font_n, const std::string& text);
 
     virtual void draw(X11Canvas* canvas, int offsetX, float alpha) const;
 
 private:
 
-    int x, y;
+    int x, y, font_n;
     std::string text;
 
 };
