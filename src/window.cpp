@@ -64,13 +64,10 @@ void X11Window::createWindowContext()
 
 void X11Window::setActiveMonitor(int monitorIndex)
 {
-    if (this->monitorIndex != monitorIndex) {
-        this->monitorIndex = monitorIndex;
-        updateActiveMonitor();
-    }
+    this->monitorIndex = monitorIndex;
 }
 
-bool X11Window::updateActiveMonitor()
+bool X11Window::isActiveMonitorChanged()
 {
     int monitorCount;
     XRRMonitorInfo* monitors = XRRGetMonitors(display, rootWindow, true, &monitorCount);
