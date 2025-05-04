@@ -6,11 +6,11 @@
 #include <iostream>
 #include <fstream>
 #include <limits.h>
+#include <pwd.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
-#include <pwd.h>
 
 #include "ansi.h"
 #include "color.h"
@@ -54,8 +54,8 @@ Config::Config()
     screenEdgeSpacing(INT_MIN),
     lineSpacing(INT_MIN),
     // font
-    fontName(""),
-    fontSize(0),
+    fontName(),
+    fontSize(),
     // colors
     colorProfile(Ansi::Profile::VGA),
     tempDefaultForegroundColor(""),
@@ -85,8 +85,10 @@ Config Config::overrideWith(const Config& other)
     if (other.screenEdgeSpacing != unsetConfig.screenEdgeSpacing) this->screenEdgeSpacing = other.screenEdgeSpacing;
     if (other.lineSpacing != unsetConfig.lineSpacing) this->lineSpacing = other.lineSpacing;
     // font
-    if (other.fontName != unsetConfig.fontName) this->fontName = other.fontName;
-    if (other.fontSize != unsetConfig.fontSize) this->fontSize = other.fontSize;
+    for (int i=0; i<10; ++i) {
+        if (other.fontName[i] != unsetConfig.fontName[i]) this->fontName[i] = other.fontName[i];
+        if (other.fontSize[i] != unsetConfig.fontSize[i]) this->fontSize[i] = other.fontSize[i];
+    }
     // colors
     if (other.colorProfile != unsetConfig.colorProfile) this->colorProfile = other.colorProfile;
     if (other.tempDefaultForegroundColor != unsetConfig.tempDefaultForegroundColor) this->tempDefaultForegroundColor = other.tempDefaultForegroundColor;
@@ -118,8 +120,8 @@ void Config::print(std::ostream& os) const
     os << std::endl;
 
     printSection(os, SECTION_FONT);
-    printSectionKeyValue(os, SECTION_FONT_NAME, fontName);
-    printSectionKeyValue(os, SECTION_FONT_SIZE, fontSize);
+    printFontName(os);
+    printFontSize(os);
     os << std::endl;
 
     printSection(os, SECTION_COLORS);
@@ -143,6 +145,30 @@ void Config::printSection(std::ostream& os, const std::string& section)
     os << "[" << section << "]" << std::endl;
 }
 
+void Config::printFontName(std::ostream& os) const
+{
+    std::stringstream fontNameSS;
+    for (auto name : fontName) {
+        fontNameSS << name << ",";
+    }
+    std::string fontNameCsv = fontNameSS.str();
+    printSectionKeyValue(os, SECTION_FONT_NAME, fontNameCsv.substr(0, fontNameCsv.find_last_not_of(',')+1));
+}
+
+void Config::printFontSize(std::ostream& os) const
+{
+    std::stringstream fontSizeSS;
+    for (auto size : fontSize) {
+        if (size) {
+            fontSizeSS << size << ",";
+        } else {
+            fontSizeSS << ",";
+        }
+    }
+    std::string fontSizeCsv = fontSizeSS.str();
+    printSectionKeyValue(os, SECTION_FONT_SIZE, fontSizeCsv.substr(0, fontSizeCsv.find_last_not_of(',')+1));
+}
+
 void Config::exitWithVersionNumber()
 {
     // print recent version parsed from CHANGELOG file at compile time
@@ -152,36 +178,38 @@ void Config::exitWithVersionNumber()
 
 void Config::exitWithUsage(int exitCode)
 {
+    //  "         1         2         3         4         5         6         7         8"
+    //  "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
     std::cout << ""
         "usage: overlay [OPTIONS] <INPUT_FILE>\n"
         "\n"
-        "  -c, --config=FILE      file path to read configuration from\n"
-        "  -h, --help             prints this help text\n"
-        "  -v, --verbose          be verbose and print some debug output\n"
-        "  -V, --version          print version number and quit\n"
+        "  -c, --config=FILE       file path to read configuration from\n"
+        "  -h, --help              prints this help text\n"
+        "  -v, --verbose           be verbose and print some debug output\n"
+        "  -V, --version           print version number and quit\n"
         "\n"
         "Positioning:\n"
-        "  -e PIXEL               screen edge spacing in pixels; defaults to '0'\n"
-        "  -l PIXEL               line spacing in pixels; defaults to '0'\n"
-        "  -m INDEX               monitor to use; defaults to '0'\n"
-        "  -o ORIENTATION         orientation to align window and lines; defaults to 'NW'\n"
-        "                         possible values are N, NE, E, SE, S, SW, W, NW and CENTER\n"
+        "  -e PIXEL                screen edge spacing in pixels; defaults to '0'\n"
+        "  -l PIXEL                line spacing in pixels; defaults to '0'\n"
+        "  -m INDEX                monitor to use; defaults to '0'\n"
+        "  -o ORIENTATION          orientation to align window and lines; defaults to 'NW'\n"
+        "                          possible values are N, NE, E, SE, S, SW, W, NW and CENTER\n"
         "\n"
         "Font:\n"
-        "  -f, --font-name=FONT   font name; defaults to 'NotoSansMono'\n"
-        "  -s, --font-size=SIZE   font size; defaults to '12'\n"
+        "  -f, --font-name=FONT,.. font name; defaults to 'NotoSansMono'\n"
+        "  -s, --font-size=SIZE,.. font size; defaults to '12'\n"
         "\n"
         "Colors:\n"
-        "  -p, --profile=PROFILE  profile for ansi colors; values are VGA or XP\n"
-        "      --fg-color=COLOR   foreground color; defaults to '[97m' (equals '[38;2;255;255;255m')\n"
-        "      --fg-alpha=ALPHA   foreground alpha; defaults to '200'\n"
-        "      --bg-color=COLOR   background color; defaults to '[40m' (equals '[48;2;0;0;0')\n"
-        "      --bg-alpha=ALPHA   background alpha; defaults to '100'\n"
+        "  -p, --profile=PROFILE   profile for ansi colors; values are VGA or XP\n"
+        "      --fg-color=COLOR    foreground color; defaults to '[97m' (equals '[38;2;255;255;255m')\n"
+        "      --fg-alpha=ALPHA    foreground alpha; defaults to '200'\n"
+        "      --bg-color=COLOR    background color; defaults to '[40m' (equals '[48;2;0;0;0')\n"
+        "      --bg-alpha=ALPHA    background alpha; defaults to '100'\n"
         "\n"
         "Behavior:\n"
-        "  -d, --dim=PERCENT      dim the text on mouse over; defaults to '75'%\n"
-        "  -D PERCENT             dim the text in general; defaults to '0'%\n"
-        "  -t PIXEL               pixel tolerance for mouse over dimming; defaults to '0'\n"
+        "  -d, --dim=PERCENT       dim the text on mouse over; defaults to '75'%\n"
+        "  -D PERCENT              dim the text in general; defaults to '0'%\n"
+        "  -t PIXEL                pixel tolerance for mouse over dimming; defaults to '0'\n"
         "";
     exit(exitCode);
 }
@@ -198,8 +226,8 @@ Config Config::defaultConfig()
     config.screenEdgeSpacing = 0;
     config.lineSpacing = 0;
     // font
-    config.fontName = "NotoSansMono";
-    config.fontSize = 12;
+    config.fontName[0] = "NotoSansMono";
+    config.fontSize[0] = 12;
     // colors
     config.colorProfile = Ansi::Profile::VGA;
     config.tempDefaultForegroundColor = "";
@@ -281,6 +309,37 @@ Color Config::assertAnsiColorParameter(const std::string& param, Ansi::Profile c
     }
 }
 
+void Config::assertFontNameParameter(const std::string& param, Config& config)
+{
+    std::string token;
+    std::istringstream iss(param);
+    int i = 0;
+    while (getline(iss, token, ',')) {
+        if (i > 9) {
+            throw std::runtime_error("must be no more than 10 font names");
+        }
+        config.fontName[i] = trim(token);
+        ++i;
+    }
+}
+
+void Config::assertFontSizeParameter(const std::string& param, Config& config)
+{
+    std::string token;
+    std::istringstream iss(param);
+    int i = 0;
+    while (getline(iss, token, ',')) {
+        if (i > 9) {
+            throw std::runtime_error("must be no more than 10 font sizes");
+        }
+        std::string size = trim(token);
+        if (!size.empty()) {
+            config.fontSize[i] = assertIntParameter(size, 1, -1);
+        }
+        ++i;
+    }
+}
+
 std::string Config::lookupLongOptionName(const struct option* longOptions, int shortOption)
 {
     const option* optIter = longOptions;
@@ -349,10 +408,10 @@ Config Config::fromParameters(int argc, char** argv)
 
                 // Font
                 case 'f':
-                    config.fontName = optarg;
+                    assertFontNameParameter(optarg, config);
                     break;
                 case 's':
-                    config.fontSize = assertIntParameter(optarg, 1, -1);
+                    assertFontSizeParameter(optarg, config);
                     break;
 
                 // Colors
@@ -508,11 +567,11 @@ bool Config::parseKeyValueLine(std::string line, std::string section, Config& co
         if (section == SECTION_FONT)
         {
             if (key == SECTION_FONT_NAME) {
-                config.fontName = value;
+                assertFontNameParameter(value, config);
                 return true;
             }
             if (key == SECTION_FONT_SIZE) {
-                config.fontSize = assertIntParameter(value, 1, -1);
+                assertFontSizeParameter(value, config);
                 return true;
             }
         }

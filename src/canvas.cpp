@@ -17,7 +17,8 @@ X11Canvas::X11Canvas(Display* display, Window window, Visual* visual, int screen
     display(display),
     visual(visual),
     screen(screen),
-    xftFont(nullptr)
+    fontIndex(0),
+    xftFonts()
 {
     colormap = DefaultColormap(display, screen);
     xftDraw = XftDrawCreate(display, window, visual, colormap);
@@ -25,26 +26,46 @@ X11Canvas::X11Canvas(Display* display, Window window, Visual* visual, int screen
     if (!XftColorAllocName(display, visual, colormap, "#000000", &xftColor)) {
         std::cout << "creating dummy color... FAILED" << std::endl;
     }
-    setFont("");
+    setFont(0, "");
 }
 
 X11Canvas::~X11Canvas()
 {
     XftColorFree(display, visual, colormap, &xftColor);
-    XftFontClose(display, xftFont);
+    for (auto xftFont : xftFonts) {
+        if (xftFont) {
+            XftFontClose(display, xftFont);
+        }
+    }
     XftDrawDestroy(xftDraw);
 }
 
-void X11Canvas::setFont(const std::string& fontname)
+void X11Canvas::setFont(unsigned int index, const std::string& fontname)
 {
-    if (xftFont) {
-        XftFontClose(display, xftFont);
+    if (index < 0 || index > 9) {
+        return;
     }
-    xftFont = XftFontOpenName(display, screen, fontname.c_str());
+    XftFont* xftFont = XftFontOpenName(display, screen, fontname.c_str());
     if (!xftFont) {
         std::cout << "loading Xft font... FAILED" << std::endl;
         exit(1);
     }
+    if (xftFonts[index]) {
+        XftFontClose(display, xftFonts[index]);
+    }
+    xftFonts[index] = xftFont;
+}
+
+unsigned int X11Canvas::selectFont(unsigned int index) {
+    if (index >= 0 && index <= 9 && xftFonts[index]) {
+        fontIndex = index;
+    }
+    return fontIndex;
+}
+
+unsigned int X11Canvas::getSelectedFontAscent() const
+{
+    return xftFonts[fontIndex]->ascent;
 }
 
 void X11Canvas::setColor(const Color& color)
@@ -76,16 +97,16 @@ void X11Canvas::drawRect(int x, int y, unsigned int w, unsigned int h) const
 
 void X11Canvas::drawString(int x, int y, const std::string& text) const
 {
-    XftDrawStringUtf8(xftDraw, &xftColor, xftFont, x, y + xftFont->ascent, (const FcChar8*)text.c_str(), text.size());
+    XftDrawStringUtf8(xftDraw, &xftColor, xftFonts[fontIndex], x, y, (const FcChar8*)text.c_str(), text.size());
 }
 
 IntPair X11Canvas::getStringDimension(const std::string& text) const
 {
     XGlyphInfo extents;
-    XftTextExtentsUtf8(display, xftFont, (const FcChar8*)text.c_str(), text.size(), &extents);
+    XftTextExtentsUtf8(display, xftFonts[fontIndex], (const FcChar8*)text.c_str(), text.size(), &extents);
 
     IntPair p;
     p.w = extents.xOff;
-    p.h = xftFont->ascent + xftFont->descent;
+    p.h = xftFonts[fontIndex]->ascent + xftFonts[fontIndex]->descent;
     return p;
 }

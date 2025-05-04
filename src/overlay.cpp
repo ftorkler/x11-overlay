@@ -88,7 +88,13 @@ int main(int argc, char* argv[])
     gui->setLineSpacing(config.lineSpacing);
     gui->setMonitorIndex(config.monitorIndex);
     // Font
-    gui->setFont(config.fontName + "-" + std::to_string(config.fontSize));
+    for (int i=0; i<10; ++i) {
+        std::string fontName = config.fontName[i] != "" ? config.fontName[i] : config.fontName[0];
+        int fontSize = config.fontSize[i] != 0 ? config.fontSize[i] : config.fontSize[0];
+        if (config.fontName[i] != "" || config.fontSize[i] != 0) {
+            gui->setFont(i, fontName + "-" + std::to_string(fontSize));
+        }
+    }
     // Colors
     gui->setColorProfile(config.colorProfile);
     gui->setDefaultForgroundColor(config.defaultForegroundColor);

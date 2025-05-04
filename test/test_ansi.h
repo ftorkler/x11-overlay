@@ -11,6 +11,7 @@ public:
     static void test_parse_control_sequence();
 	static void test_to_8bit_color();
 	static void test_to_color();
+	static void test_to_font_index();
 
 };
 

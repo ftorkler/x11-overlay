@@ -5,6 +5,7 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xft/Xft.h>
+#include <vector>
 
 #include "color.h"
 #include "pair.h"
@@ -17,7 +18,11 @@ public:
     X11Canvas(Display* display, Window window, Visual* visual, int screen);
     ~X11Canvas();
 
-    void setFont(const std::string& fontname);
+    void setFont(unsigned int fontIndex, const std::string& fontname);
+    unsigned int selectFont(unsigned int fontIndex);
+    unsigned int getSelectedFontAscent() const;
+
+    //void setFont(const std::string& fontname);
     void setColor(const Color& color);
     void drawRect(int x, int y, unsigned int w, unsigned int h) const;
     void drawString(int x, int y, const std::string& text) const;
@@ -30,7 +35,8 @@ private:
     Colormap colormap;
     int screen;
 
-    XftFont* xftFont;
+    unsigned int fontIndex;
+    XftFont* xftFonts[10];
     XftDraw* xftDraw;
     XftColor xftColor;
 

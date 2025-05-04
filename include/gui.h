@@ -4,6 +4,7 @@
 #include <string>
 #include <X11/Xlib.h>
 #include <vector>
+#include <map>
 
 #include "ansi.h"
 #include "color.h"
@@ -34,7 +35,7 @@ public:
     void setScreenEdgeSpacing(unsigned int spacing);
     void setLineSpacing(unsigned int spacing);
     void setMonitorIndex(unsigned int index);
-    void setFont(const std::string& font);
+    void setFont(unsigned int fontIndex, const std::string& font);
 
     void flush();
     void clearMessages();
@@ -44,12 +45,6 @@ public:
     static Orientation orientationFromString(const std::string& input);
 
 private:
-
-    struct ClippingAABB {
-        ClippingAABB(int x, int y, unsigned int w, unsigned int h): x(x), y(y), w(w), h(h) {}
-        const int x, y;
-        const unsigned int w, h;
-    };
 
     static const std::string trimLinefeedsAndApplyTabs(const std::string& text);
     static const std::string trimForOrientation(const Orientation orientation, const std::string& text);
@@ -84,17 +79,12 @@ class DrawCmd
 
 public:
 
-    DrawCmd(const unsigned int& width = 0, const unsigned int& height = 0): w(width), h(height) { }
+    int x, y;
+    unsigned int w, h;
+
+    DrawCmd(const unsigned int& width = 0, const unsigned int& height = 0): x(0), y(0), w(width), h(height) { }
     virtual ~DrawCmd() { }
-    virtual void draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const = 0;
-
-    unsigned int getWidth() const { return w; }
-    unsigned int getHeight() const { return h; }
-
-private:
-
-    unsigned int w;
-    unsigned int h;
+    virtual void draw(X11Canvas* canvas, float alpha) const = 0;
 
 };
 
@@ -105,7 +95,7 @@ public:
 
     DrawColorCmd(const Color& color);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const;
+    virtual void draw(X11Canvas* canvas, float alpha) const;
 
 private:
 
@@ -120,7 +110,7 @@ public:
 
     DrawRectCmd(unsigned int w, unsigned int h);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const;
+    virtual void draw(X11Canvas* canvas, float alpha) const;
 
 };
 
@@ -131,11 +121,26 @@ public:
 
     DrawTextCmd(unsigned int w, unsigned int h, const std::string& text);
 
-    virtual void draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const;
+    virtual void draw(X11Canvas* canvas, float alpha) const;
 
 private:
 
     std::string text;
+
+};
+
+class DrawSelectFontCmd : public DrawCmd
+{
+
+public:
+
+    DrawSelectFontCmd(unsigned int fontIndex);
+
+    virtual void draw(X11Canvas* canvas, float alpha) const;
+
+private:
+
+    unsigned int fontIndex;
 
 };
 
@@ -144,19 +149,19 @@ class Line
 
 public:
 
-    int x, y, w, h;
+    int x, y;
+    unsigned int w, h;
+    unsigned int baseline;
+    const std::vector<DrawCmd*> drawBgCommands;
+    const std::vector<DrawCmd*> drawFgCommands;
 
     Line(
+        unsigned int baseline,
         const std::vector<DrawCmd*>& drawBgCommands,
         const std::vector<DrawCmd*>& drawFgCommands);
 
     void drawBg(X11Canvas* canvas, float alpha) const;
     void drawFg(X11Canvas* canvas, float alpha) const;
-
-private:
-
-    std::vector<DrawCmd*> drawBgCommands;
-    std::vector<DrawCmd*> drawFgCommands;
 
 };
 

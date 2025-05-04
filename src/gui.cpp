@@ -103,10 +103,10 @@ void Gui::setMonitorIndex(unsigned int index)
     window->setActiveMonitor(index);
 }
 
-void Gui::setFont(const std::string& font)
+void Gui::setFont(unsigned int fontIndex, const std::string& font)
 {
     redraw = true;
-    canvas->setFont(font);
+    canvas->setFont(fontIndex, font);
 }
 
 void Gui::flush()
@@ -125,13 +125,14 @@ void Gui::flush()
     window->clear();
 
     if (!lines.empty()) {
-        float a = mouseOver ? mouseOverAlpha : alpha;
+        canvas->selectFont(0);
 
-        DrawColorCmd(bgColor).draw(canvas, 0, 0, a);
+        float a = mouseOver ? mouseOverAlpha : alpha;
+        DrawColorCmd(bgColor).draw(canvas, a);
         for (auto line : lines) {
             line->drawBg(canvas, a);
         }
-        DrawColorCmd(fgColor).draw(canvas, 0, 0, a);
+        DrawColorCmd(fgColor).draw(canvas, a);
         for (auto line : lines) {
             line->drawFg(canvas, a);
         }
@@ -163,6 +164,7 @@ void Gui::addMessage(const std::string& message)
     std::vector<DrawCmd*> drawFgCommands;
 
     std::string trimmedMessage = trimForOrientation(orientation, trimLinefeedsAndApplyTabs(message));
+    unsigned int maxFontAscent = 0;
 
     for (auto chunk : Ansi::split(trimmedMessage)) {
         Ansi::Sequence sequence = Ansi::parseControlSequence(chunk);
@@ -198,8 +200,13 @@ void Gui::addMessage(const std::string& message)
             increaseIntensity = false;
             drawFgCommands.emplace_back(new DrawColorCmd(Ansi::toColor(lastFgColor, increaseIntensity, colorProfile)));
             break;
+        case Ansi::Sequence::DEFAULT_FONT:
+        case Ansi::Sequence::ALTERNATIVE_FONT:
+            drawFgCommands.emplace_back(new DrawSelectFontCmd(canvas->selectFont(Ansi::toFontIndex(chunk))));
+            break;
         case Ansi::Sequence::NONE:
         {
+            maxFontAscent = std::max(maxFontAscent, canvas->getSelectedFontAscent());
             Dimesion chunkDim = canvas->getStringDimension(chunk);
             drawBgCommands.emplace_back(new DrawRectCmd(chunkDim.w, chunkDim.h));
             drawFgCommands.emplace_back(new DrawTextCmd(chunkDim.w, chunkDim.h, chunk));
@@ -211,6 +218,7 @@ void Gui::addMessage(const std::string& message)
     }
 
     lines.emplace_back(new Line(
+        maxFontAscent,
         drawBgCommands,
         drawFgCommands
     ));
@@ -220,14 +228,27 @@ void Gui::layoutLines()
 {
     if (!recalc) { return; }
 
-    int maxW = 0;
-    int maxH = 0;
+    unsigned int maxW = 0;
+    unsigned int maxH = 0;
     for (auto line : lines) {
         maxW = std::max(maxW, line->w);
     }
+    int cmdX;
     for (auto line : lines) {
         line->x = calcXforOrientation(line->w, maxW, 0);
         line->y = maxH;
+
+        cmdX = line->x;
+        for (auto bgCmd : line->drawBgCommands) {
+            bgCmd->x = cmdX; cmdX += bgCmd->w;
+            bgCmd->y = line->y;
+            bgCmd->h = line->h;
+        }
+        cmdX = line->x;
+        for (auto fgCmd : line->drawFgCommands) {
+            fgCmd->x = cmdX; cmdX += fgCmd->w;
+            fgCmd->y = line->y + line->baseline;
+        }
 
         maxH += line->h + lineSpacing;
     }
@@ -324,8 +345,8 @@ bool Gui::isMouseOver() const
         for (auto line : lines) {
             if (pos.x + t >= line->x &&
                 pos.y + t >= line->y &&
-                pos.x - t <= line->x + line->w &&
-                pos.y - t <= line->y + line->h)
+                pos.x - t <= line->x + (int)line->w &&
+                pos.y - t <= line->y + (int)line->h)
             {
                 return true;
             }
@@ -416,7 +437,7 @@ DrawColorCmd::DrawColorCmd(const Color& color)
 {
 }
 
- void DrawColorCmd::draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const
+ void DrawColorCmd::draw(X11Canvas* canvas, float alpha) const
  {
      canvas->setColor(Color(color.r, color.g, color.b, color.a * alpha));
  }
@@ -427,9 +448,9 @@ DrawRectCmd::DrawRectCmd(unsigned int w, unsigned int h)
 {
 }
 
-void DrawRectCmd::draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const
+void DrawRectCmd::draw(X11Canvas* canvas, float alpha) const
 {
-    canvas->drawRect(offsetX, offsetY, getWidth(), getHeight());
+    canvas->drawRect(x, y, w, h);
 }
 
 DrawTextCmd::DrawTextCmd(unsigned int w, unsigned int h, const std::string& text)
@@ -439,12 +460,25 @@ DrawTextCmd::DrawTextCmd(unsigned int w, unsigned int h, const std::string& text
 {
 }
 
-void DrawTextCmd::draw(X11Canvas* canvas, int offsetX, int offsetY, float alpha) const
+void DrawTextCmd::draw(X11Canvas* canvas, float alpha) const
 {
-    canvas->drawString(offsetX, offsetY, text);
+    canvas->drawString(x, y, text);
+}
+
+DrawSelectFontCmd::DrawSelectFontCmd(unsigned int fontIndex)
+:
+    DrawCmd(),
+    fontIndex(fontIndex)
+{
+}
+
+void DrawSelectFontCmd::draw(X11Canvas* canvas, float alpha) const
+{
+    canvas->selectFont(fontIndex);
 }
 
 Line::Line(
+    unsigned int baseline,
     const std::vector<DrawCmd*>& drawBgCommands,
     const std::vector<DrawCmd*>& drawFgCommands)
 :
@@ -452,31 +486,26 @@ Line::Line(
     y(0),
     w(0),
     h(0),
+    baseline(baseline),
     drawBgCommands(drawBgCommands),
     drawFgCommands(drawFgCommands)
 {
     for (auto drawCmd : drawFgCommands) {
-        w += drawCmd->getWidth();
-        h = std::max(h, (int)drawCmd->getHeight());
+        w += drawCmd->w;
+        h = std::max(h, drawCmd->h);
     }
 }
 
 void Line::drawBg(X11Canvas* canvas, float alpha) const
 {
-    int offsetX = x;
-    int offsetY = y;
     for (auto cmd : drawBgCommands) {
-        cmd->draw(canvas, offsetX, offsetY, alpha);
-        offsetX += cmd->getWidth();
+        cmd->draw(canvas, alpha);
     }
 }
 
 void Line::drawFg(X11Canvas* canvas, float alpha) const
 {
-    int offsetX = x;
-    int offsetY = y;
     for (auto cmd : drawFgCommands) {
-        cmd->draw(canvas, offsetX, offsetY, alpha);
-        offsetX += cmd->getWidth();
+        cmd->draw(canvas, alpha);
     }
 }

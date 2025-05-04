@@ -124,36 +124,52 @@ void TestConfig::test_parseKeyValueLine_forOrientation()
 }
 
 void TestConfig::test_fromFile() {
-	Config defaultConfig = Config::defaultConfig();
-	Config fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc");
+	Config emptyConfig;
 
 	TEST_CASE("test fromFile (regular)");
-	TEST_CHECK(fileConfig.monitorIndex != defaultConfig.monitorIndex);
+	Config fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc");
+	TEST_CHECK(fileConfig.monitorIndex != emptyConfig.monitorIndex);
 	TEST_CHECK(fileConfig.monitorIndex == 1);
-	TEST_CHECK(fileConfig.orientation != defaultConfig.orientation);
+	TEST_CHECK(fileConfig.orientation != emptyConfig.orientation);
 	TEST_CHECK(fileConfig.orientation ==  Gui::Orientation::SE);
-	TEST_CHECK(fileConfig.screenEdgeSpacing != defaultConfig.screenEdgeSpacing);
+	TEST_CHECK(fileConfig.screenEdgeSpacing != emptyConfig.screenEdgeSpacing);
 	TEST_CHECK(fileConfig.screenEdgeSpacing ==  10);
-	TEST_CHECK(fileConfig.lineSpacing != defaultConfig.lineSpacing);
+	TEST_CHECK(fileConfig.lineSpacing != emptyConfig.lineSpacing);
 	TEST_CHECK(fileConfig.lineSpacing ==  20);
-	TEST_CHECK(fileConfig.fontName != defaultConfig.fontName);
-	TEST_CHECK(fileConfig.fontName == "Mx437 IBM VGA 8x16");
-	TEST_CHECK(fileConfig.fontSize != defaultConfig.fontSize);
-	TEST_CHECK(fileConfig.fontSize == 24);
-	TEST_CHECK(fileConfig.colorProfile != defaultConfig.colorProfile);
+	TEST_CHECK(fileConfig.fontName[0] != emptyConfig.fontName[0]);
+	TEST_CHECK(fileConfig.fontName[0] == "Mx437 IBM VGA 8x16");
+	TEST_CHECK(fileConfig.fontSize[0] != emptyConfig.fontSize[0]);
+	TEST_CHECK(fileConfig.fontSize[0] == 24);
+	for (int i=1; i<10; ++i) {
+       TEST_CHECK_(fileConfig.fontName[i] == "", "fontName[%i] to be '', but was '%s'", i, fileConfig.fontName[i].c_str());
+       TEST_CHECK_(fileConfig.fontSize[i] == 0, "fontSize[%i] to be '0', but was '%i'", i, fileConfig.fontSize[i]);
+	}
+	TEST_CHECK(fileConfig.colorProfile != emptyConfig.colorProfile);
 	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
-	TEST_CHECK(fileConfig.defaultForegroundColor != defaultConfig.defaultForegroundColor);
+	TEST_CHECK(fileConfig.defaultForegroundColor != emptyConfig.defaultForegroundColor);
 	TEST_CHECK(fileConfig.defaultForegroundColor == Color(255, 0, 0, 200));
-	TEST_CHECK(fileConfig.defaultBackgroundColor != defaultConfig.defaultBackgroundColor);
+	TEST_CHECK(fileConfig.defaultBackgroundColor != emptyConfig.defaultBackgroundColor);
 	TEST_CHECK(fileConfig.defaultBackgroundColor == Color(11, 22, 33, 100));
-	TEST_CHECK(fileConfig.inputFile != defaultConfig.inputFile);
+	TEST_CHECK(fileConfig.inputFile != emptyConfig.inputFile);
 	TEST_CHECK(fileConfig.inputFile ==  "/some/inputFile.txt");
 
-	fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc_colorprofile-after-color");
 	TEST_CASE("test fromFile (colorprofile after color)");
+	fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc_colorprofile-after-color");
 	TEST_CHECK(fileConfig.colorProfile == Ansi::Profile::XP);
-	TEST_CHECK(fileConfig.defaultForegroundColor != defaultConfig.defaultForegroundColor);
+	TEST_CHECK(fileConfig.defaultForegroundColor != emptyConfig.defaultForegroundColor);
 	TEST_CHECK(fileConfig.defaultForegroundColor == Color(255, 0, 0, 200));
+
+	TEST_CASE("test fromFile (multiple fonts names and sizes)");
+	fileConfig = Config::fromFile(getExecutableDir() + "../test/resources/test-x11-overlayrc_multiple_fonts");
+	TEST_CHECK(fileConfig.fontName[0] == "Mx437 IBM VGA 8x16");
+	TEST_CHECK(fileConfig.fontName[4] == "Another Font");
+	for (int i : {1,2,3,5,6,7,8,9}) {
+        TEST_CHECK_(fileConfig.fontName[i] == "", "fontName[%i] to be '', but was '%s'", i, fileConfig.fontName[i].c_str());
+    }
+	TEST_CHECK(fileConfig.fontSize[4] == 36);
+    for (int i : {0,1,2,3,5,6,7,8,9}) {
+        TEST_CHECK_(fileConfig.fontSize[i] == 0, "fontSize[%i] to be '0', but was '%i'", i, fileConfig.fontSize[i]);
+    }
 }
 
 std::string TestConfig::getExecutablePath() {

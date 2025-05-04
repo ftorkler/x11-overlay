@@ -165,6 +165,20 @@ Color Ansi::_to8bitColor(int code, Color fallbackColor, Ansi::Profile profile)
         b != 0 ? b * 40 + 55 : 0);
 }
 
+unsigned int Ansi::toFontIndex(const std::string& ansi)
+{
+    if (ansi.length() != 5 || ansi.rfind(ANSI_INIT) != 0 || ansi.find(ANSI_END) != 4) {
+        return 0;
+    }
+    // ESC[10m - default font
+    // ESC[11m .. ESC[19m - alternative fonts
+    int code = stoi(ansi.substr(2, 3));
+    if (code >= 10 && code <= 19) {
+        return code - 10;
+    }
+    return 0;
+}
+
 Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
 {
     if (text.length() < 4 || text.rfind(ANSI_INIT) != 0 || text.find(ANSI_END) != text.length()-1) {
@@ -192,6 +206,18 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
         return Sequence::INCREASE_INTENSITY;
     case 2:
         return Sequence::DECREASED_INTENSITY;
+    case 10:
+        return Sequence::DEFAULT_FONT;
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+        return Sequence::ALTERNATIVE_FONT;
     case 22:
         return Sequence::NORMAL_INTENSITY;
     case 39:

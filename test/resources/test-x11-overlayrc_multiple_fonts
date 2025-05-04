@@ -1,0 +1,9 @@
+;this is a config file for tests
+;
+;   This test should ensure that a comma separated list of font names is parsed correctly.
+;
+
+
+[Font]
+Name=Mx437 IBM VGA 8x16 ,, ,,Another Font,,
+Size=,  , ,,36,

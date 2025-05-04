@@ -44,6 +44,12 @@ void check_to_color(std::string givenCode, Color expectedColor, bool increaseInt
 		expectedColor.r, expectedColor.g, expectedColor.b, expectedColor.a);
 }
 
+void check_to_font_index(std::string givenCode, unsigned int expectedIndex)
+{
+    unsigned int index = Ansi::toFontIndex(givenCode);
+    TEST_CHECK_(index == expectedIndex, "fromAnsi(ESC%s) was '%d', but expected to be '%d'", givenCode.substr(1).c_str(), index, expectedIndex);
+}
+
 void TestAnsi::test_to_8bit_color()
 {
 	// for code not range [0..255] (fallback)
@@ -147,6 +153,27 @@ void TestAnsi::test_to_color()
 	check_to_color("\e[48;2;0;0;0m", Color(0, 0, 0));				// in range
 }
 
+void TestAnsi::test_to_font_index()
+{
+    TEST_CASE("handle all possible font selections");
+    check_to_font_index("\e[10m", 0);
+    check_to_font_index("\e[11m", 1);
+    check_to_font_index("\e[12m", 2);
+    check_to_font_index("\e[13m", 3);
+    check_to_font_index("\e[14m", 4);
+    check_to_font_index("\e[15m", 5);
+    check_to_font_index("\e[16m", 6);
+    check_to_font_index("\e[17m", 7);
+    check_to_font_index("\e[18m", 8);
+    check_to_font_index("\e[19m", 9);
+
+    TEST_CASE("handle invalid font selections");
+    check_to_font_index("\e[9m",  0);
+    check_to_font_index("\e[09m", 0);
+    check_to_font_index("\e[20m", 0);
+    check_to_font_index("\e[100m", 0);
+}
+
 void TestAnsi::test_split()
 {
     std::vector<std::string> tokens;
@@ -170,8 +197,8 @@ void TestAnsi::test_split()
     TEST_CHECK(tokens[0] == "text without colors");
 
 	/* split text with simple ansi control sequence inbetween */
-    tokens = Ansi::split("text with \e[38;5;2mred\e[0m color");
 	TEST_CASE("split text with simple ansi control sequence inbetween");
+    tokens = Ansi::split("text with \e[38;5;2mred\e[0m color");
     TEST_ASSERT_EQUAL(tokens.size(), 5);
     TEST_EQUAL(tokens[0], "text with ");
     TEST_EQUAL(tokens[1], "\e[38;5;2m");
@@ -180,8 +207,8 @@ void TestAnsi::test_split()
     TEST_EQUAL(tokens[4], " color");
 
 	/* split text with simple ansi control sequence at beginning */
-	tokens = Ansi::split("\e[38;5;2mtext with red\e[0m color");
 	TEST_CASE("split text with simple ansi control sequence at beginning");
+	tokens = Ansi::split("\e[38;5;2mtext with red\e[0m color");
     TEST_ASSERT_EQUAL(tokens.size(), 4);
     TEST_EQUAL(tokens[0], "\e[38;5;2m");
 	TEST_EQUAL(tokens[1], "text with red");
@@ -189,8 +216,8 @@ void TestAnsi::test_split()
     TEST_EQUAL(tokens[3], " color");
 
 	/* split text with simple ansi control sequence at beginning and end */
-	tokens = Ansi::split("\e[38;5;2mtext with red color\e[0m");
 	TEST_CASE("split text with simple ansi control sequence at beginning");
+	tokens = Ansi::split("\e[38;5;2mtext with red color\e[0m");
     TEST_ASSERT_EQUAL(tokens.size(), 3);
     TEST_EQUAL(tokens[0], "\e[38;5;2m");
 	TEST_EQUAL(tokens[1], "text with red color");

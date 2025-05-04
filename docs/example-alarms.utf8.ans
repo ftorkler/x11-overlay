@@ -1,6 +1,6 @@
 [ srv-bertram ]
-  [91mCRIT[38;5;248m: Disk Space Usage ([97m96%[38;5;248m)
-  [33mWARN[38;5;248m: Memory Usage ([97m82%[38;5;248m)
+  [11m[91mCRIT[38;5;248m:[10m Disk Space Usage ([97m96%[38;5;248m)
+  [11m[33mWARN[38;5;248m:[10m Memory Usage ([97m82%[38;5;248m)
 [0m
 [ srv-gerda ]
-  [91mCRIT[38;5;248m: Load Average ([97m0.7[38;5;248m)[0m
+  [11m[91mCRIT[38;5;248m:[10m Load Average ([97m0.7[38;5;248m)[0m

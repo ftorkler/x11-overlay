@@ -26,6 +26,8 @@ public:
         RESET,
         RESET_FOREGROUND,
         RESET_BACKGROUND,
+        DEFAULT_FONT,
+        ALTERNATIVE_FONT,
         UNKNOWN
     };
 
@@ -38,7 +40,8 @@ public:
     static std::string profileToString(Profile profile);
     static Profile profileFromString(const std::string& input);
 
-    static Color toColor(const std::string &ansi, Color fallbackColor, bool increaseIntensity = false, Profile profile = Profile::XP);
+    static Color toColor(const std::string& ansi, Color fallbackColor, bool increaseIntensity = false, Profile profile = Profile::XP);
+    static unsigned int toFontIndex(const std::string& ansi);
 
     static Sequence parseControlSequence(const std::string& text);
 

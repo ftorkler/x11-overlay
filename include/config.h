@@ -2,8 +2,10 @@
 #ifndef OVERLAY_CONFIG_H
 #define OVERLAY_CONFIG_H
 
-#include <string>
+#include <array>
 #include <ostream>
+#include <string>
+#include <vector>
 
 #include "ansi.h"
 #include "gui.h"
@@ -31,8 +33,8 @@ public:
     int screenEdgeSpacing;
     int lineSpacing;
     // font
-    std::string fontName;
-    int fontSize;
+    std::string fontName[10];
+    int fontSize[10];
     // colors
     Ansi::Profile colorProfile;
     std::string tempDefaultForegroundColor;
@@ -62,6 +64,8 @@ private:
     static Gui::Orientation assertOrientationParameter(const std::string& param);
     static int assertIntParameter(const std::string& param, int min, int max);
     static Color assertAnsiColorParameter(const std::string& param, Ansi::Profile colorProfile);
+    static void assertFontNameParameter(const std::string& param, Config& config);
+    static void assertFontSizeParameter(const std::string& param, Config& config);
     static std::string& trim(std::string& str);
 
     static bool parseEmptyLine(std::string line);
@@ -69,6 +73,8 @@ private:
     static bool parseSectionLine(std::string line, std::string& section);
     static bool parseKeyValueLine(std::string line, std::string section, Config& config);
 
+    void printFontName(std::ostream& os) const;
+    void printFontSize(std::ostream& os) const;
     static void printSection(std::ostream& os, const std::string& section);
     template <typename T>
     static void printSectionKeyValue(std::ostream& os, const std::string& key, const T& value)
