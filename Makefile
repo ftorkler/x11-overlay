@@ -24,7 +24,7 @@ overlay: $(EXE)
 test: $(TEST_EXE)
 
 debug: CPPFLAGS += -DDEBUG -g
-debug: $(EXE)
+debug: $(EXE) $(TEST_EXE)
 
 $(EXE): $(OBJ_DIR)/overlay.o $(OBJ) | $(BIN_DIR)
 	$(CXX) $(LDFLAGS) $^ $(LDLIBS) -o $@

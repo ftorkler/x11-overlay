@@ -45,14 +45,15 @@ public:
 
     static Sequence parseControlSequence(const std::string& text);
 
-    static std::vector<std::string> split(const std::string text);
+    static std::vector<std::string> split(const std::string& text);
 
  private:
 
-    static Color _to24bitColor(std::string code, Color fallbackColor);
+    static Color _to24bitColor(const std::string& code, Color fallbackColor);
     static Color _to8bitColor(int code, Color fallbackColor, Profile profile = Profile::XP);
 
     static void subsplit(const std::string& text, std::vector<std::string>* result);
+    static std::string toPrintable(const std::string& text);
 
 };
 

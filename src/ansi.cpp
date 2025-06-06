@@ -1,6 +1,5 @@
 #include "ansi.h"
 
-#include <cstddef>
 #include <deque>
 #include <iostream>
 #include <sstream>
@@ -20,64 +19,72 @@
 // https://en.wikipedia.org/wiki/ANSI_escape_code
 Color Ansi::toColor(const std::string& ansi, Color fallbackColor, bool increaseIntensity, Ansi::Profile profile)
 {
-    int pos;
-    if (ansi.rfind(ANSI_INIT) != 0) {
-        // fallback
+    try {
+        if (ansi.rfind(ANSI_INIT) != 0 || ansi.back() != ANSI_END) {
+            return fallbackColor;
+        }
+
+        if (ansi.find(PREFIX_FG_COLOR) == 0 || ansi.find(PREFIX_BG_COLOR) == 0) {
+            // 24bit - ESC[38;2;<r>;<g>;<b>m - foreground color
+            // 24bit - ESC[48;2;<r>;<g>;<b>m - background color
+            if (ansi.find(INFIX_COLOR_24BIT) == PREFIX_COLOR_LEN) {
+                std::string colorCode = ansi.substr(PREFIX_COLOR_24BIT_LEN, ansi.length() - PREFIX_COLOR_24BIT_LEN - 1);
+                return _to24bitColor(colorCode, fallbackColor);
+            }
+
+            // 8bit - ESC[38;5;<code>m - foreground color
+            // 8bit - ESC[48;5;<code>m - background color
+            if (ansi.find(INFIX_COLOR_8BIT) == PREFIX_COLOR_LEN) {
+                std::string colorCode = ansi.substr(PREFIX_COLOR_8BIT_LEN, ansi.length() - PREFIX_COLOR_8BIT_LEN - 1);
+                return _to8bitColor(stoi(colorCode), fallbackColor, profile);
+            }
+        }
+
+        //3-4bit
+        if (size_t pos; ansi.find(ANSI_DELIMITER) == std::string::npos && (pos = ansi.rfind(ANSI_END)) >= 4) {
+            int colorCode = stoi(ansi.substr(2, pos - 2));
+            if (colorCode >= 30 && colorCode <= 37) {
+                int intensityLift = increaseIntensity ? 8 : 0;
+                return _to8bitColor(colorCode - 30 + intensityLift, fallbackColor, profile);
+            }
+            if (colorCode >= 40 && colorCode <= 47) {
+                int intensityLift = increaseIntensity ? 8 : 0;
+                return _to8bitColor(colorCode - 40 + intensityLift, fallbackColor, profile);
+            }
+            if (colorCode >= 90 && colorCode <= 97) {
+                return _to8bitColor(colorCode - 90 + 8, fallbackColor, profile);
+            }
+            if (colorCode >= 100 && colorCode <= 107) {
+                return _to8bitColor(colorCode - 100 + 8, fallbackColor, profile);
+            }
+        }
+    } catch (...) {
+        std::cerr << "cannot parse ansi color '" << toPrintable(ansi) << "'" << std::endl;
         return fallbackColor;
     }
-
-    if (ansi.find(PREFIX_FG_COLOR) == 0 || ansi.find(PREFIX_BG_COLOR) == 0) {
-        // 24bit - ESC[38;2;[colorprofile];<r>;<g>;<b>m - foreground color
-        // 24bit - ESC[48;2;[colorprofile];<r>;<g>;<b>m - background color
-        if (ansi.find(INFIX_COLOR_24BIT) == PREFIX_COLOR_LEN && (pos = ansi.rfind(ANSI_END)) > PREFIX_COLOR_24BIT_LEN) {
-            std::string colorCode = ansi.substr(PREFIX_COLOR_24BIT_LEN, pos - PREFIX_COLOR_24BIT_LEN);
-            return _to24bitColor(colorCode, fallbackColor);
-        }
-
-        // 8bit - ESC[38;5;<code>m - foreground color
-        // 8bit - ESC[48;5;<code>m - background color
-        if (ansi.find(INFIX_COLOR_8BIT) == PREFIX_COLOR_LEN && (pos = ansi.rfind(ANSI_END)) > PREFIX_COLOR_8BIT_LEN) {
-            std::string colorCode = ansi.substr(PREFIX_COLOR_8BIT_LEN, pos - PREFIX_COLOR_8BIT_LEN);
-            return _to8bitColor(stoi(colorCode), fallbackColor, profile);
-        }
-    }
-
-    //3-4bit
-    if (ansi.find(ANSI_DELIMITER) == std::string::npos && (pos = ansi.rfind(ANSI_END)) >= 4) {
-        int colorCode = stoi(ansi.substr(2, pos - 2));
-        if (colorCode >= 30 && colorCode <= 37) {
-            int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 30 + intensitiyLift, fallbackColor, profile);
-        }
-        if (colorCode >= 40 && colorCode <= 47) {
-            int intensitiyLift = increaseIntensity ? 8 : 0;
-            return _to8bitColor(colorCode - 40 + intensitiyLift, fallbackColor, profile);
-        }
-        if (colorCode >= 90 && colorCode <= 97) {
-            return _to8bitColor(colorCode - 90 + 8, fallbackColor, profile);
-        }
-        if (colorCode >= 100 && colorCode <= 107) {
-            return _to8bitColor(colorCode - 100 + 8, fallbackColor, profile);
-        }
-    }
-
     return fallbackColor;
 }
 
-Color Ansi::_to24bitColor(std::string code, Color fallbackColor)
+Color Ansi::_to24bitColor(const std::string& code, Color fallbackColor)
 {
+    if (code.empty()) {
+        return fallbackColor;
+    }
     std::stringstream ss(code);
     std::vector<int> tokens;
     std::string token;
     while (std::getline(ss, token, ANSI_DELIMITER)) {
-        tokens.emplace_back(stoi(token));
+        tokens.emplace_back(!token.empty() ? stoi(token) : 0);
+    }
+    if (code.back() == ANSI_DELIMITER) {
+        tokens.emplace_back(0);
     }
 
     int n = tokens.size();
     if (n >= 3) {
-        int r = tokens[n-3];
-        int g = tokens[n-2];
-        int b = tokens[n-1];
+        int r = tokens[0];
+        int g = tokens[1];
+        int b = tokens[2];
 
         if (r >= 0 && r <= 255 &&
             g >= 0 && g <= 255 &&
@@ -167,21 +174,34 @@ Color Ansi::_to8bitColor(int code, Color fallbackColor, Ansi::Profile profile)
 
 unsigned int Ansi::toFontIndex(const std::string& ansi)
 {
-    if (ansi.length() != 5 || ansi.rfind(ANSI_INIT) != 0 || ansi.find(ANSI_END) != 4) {
+    if (ansi.length() != 5 || ansi.find(ANSI_INIT) != 0 || ansi[4] != ANSI_END) {
         return 0;
     }
     // ESC[10m - default font
     // ESC[11m .. ESC[19m - alternative fonts
-    int code = stoi(ansi.substr(2, 3));
-    if (code >= 10 && code <= 19) {
-        return code - 10;
+    const char digit1 = ansi[2];
+    const char digit2 = ansi[3];
+    if (digit1 != '1') {
+        return 0;
     }
-    return 0;
+    switch (digit2) {
+        case '0': return 0;
+        case '1': return 1;
+        case '2': return 2;
+        case '3': return 3;
+        case '4': return 4;
+        case '5': return 5;
+        case '6': return 6;
+        case '7': return 7;
+        case '8': return 8;
+        case '9': return 9;
+        default: return 0;
+    }
 }
 
 Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
 {
-    if (text.length() < 4 || text.rfind(ANSI_INIT) != 0 || text.find(ANSI_END) != text.length()-1) {
+    if (text.length() < 3 || text.rfind(ANSI_INIT) != 0 || text.find(ANSI_END) != text.length()-1) {
         return Sequence::NONE;
     }
 
@@ -198,7 +218,14 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
         return Sequence::UNKNOWN;
     }
 
-    switch (stoi(code))
+    int codenum;
+    try {
+        codenum = stoi(code);
+    } catch (...) {
+        return Sequence::UNKNOWN;
+    }
+
+    switch (codenum)
     {
     case 0:
         return Sequence::RESET;
@@ -267,7 +294,7 @@ Ansi::Sequence Ansi::parseControlSequence(const std::string& text)
     }
 }
 
-std::vector<std::string> Ansi::split(const std::string text)
+std::vector<std::string> Ansi::split(const std::string& text)
 {
     std::string token[] = {
         std::string(ANSI_INIT),
@@ -293,39 +320,39 @@ std::vector<std::string> Ansi::split(const std::string text)
 }
 
 void Ansi::subsplit(const std::string& text, std::vector<std::string>* result) {
-    if (text.size() <= 2 || text[0] != ANSI_START || text[text.size()-1] != ANSI_END) {
+    if (text.size() <= 3 || text.rfind(ANSI_INIT) != 0 || text.back() != ANSI_END) {
         result->emplace_back(text);
         return;
     }
 
     std::string token;
     std::istringstream iss(text.substr(2, text.size()-3));
-    std::deque<int> codes;
+    std::deque<std::string> codes;
     while (getline(iss, token, ANSI_DELIMITER)) {
-        codes.push_back(stoi(token));
+        codes.push_back(!token.empty() ? token : "0");
     }
 
     while (!codes.empty()) {
-        int code = codes.front();
+        std::string code = codes.front();
         codes.pop_front();
 
-        if (code == 38 || code == 48 || code == 58) {
+        if (code == "38" || code == "48" || code == "58") {
             std::stringstream sequence;
             sequence << ANSI_INIT << code;
 
             code = codes.front(); codes.pop_front();
             sequence << ANSI_DELIMITER << code;
 
-            if (code == 2) {
+            if (code == "2") {
                 sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
                 sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
                 sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
             }
-            else if (code == 5) {
+            else if (code == "5") {
                 sequence << ANSI_DELIMITER << codes.front(); codes.pop_front();
             }
             else {
-                std::cout << "parsing ansi control sequence 'ESC" << text.substr(1, text.size()-1) << "'... FAILED" << std::endl;
+                std::cout << "parsing ansi control sequence '" << toPrintable(text) << "'... FAILED" << std::endl;
             }
             sequence << ANSI_END;
             result->emplace_back(sequence.str());
@@ -336,6 +363,11 @@ void Ansi::subsplit(const std::string& text, std::vector<std::string>* result) {
             result->emplace_back(sequence.str());
         }
     }
+}
+
+std::string Ansi::toPrintable(const std::string& ansi)
+{
+    return (!ansi.empty() && ansi[0] == ANSI_START) ? ("^" + ansi.substr(1)) : ansi;
 }
 
 std::string Ansi::profileToString(Profile profile)

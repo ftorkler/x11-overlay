@@ -9,14 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Reposition overlay when monitor resoultion is changed.
-- File changes are watched by the file system and the input file is now only reloaded when neccessary.
+- Reposition overlay when monitor resolution is changed.
+- File changes are watched by the file system and the input file is now only reloaded when necessary.
 - Support to choose default or one out of nine alternative fonts. A font change or reset can be initiated by Ansi Escape Sequences (see [SGR](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters "Select_Graphic_Rendition")).
 For example: "Some text with **^[11m**some alternative font part**^[10m** and some more text with the default font again."
 
 ### Fixed
 
 - Handle "Operating System Commands" (OSC; `^]8;;`) and "String Terminators" (ST; `^\`) gracefully and print them as is for now. OSC and ST are used to set window title or hyperlinks.
+- Handle malformed ansi escape sequences gracefully
 
 ## [0.3.0] - 2024-09-24
 
