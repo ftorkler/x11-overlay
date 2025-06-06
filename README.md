@@ -22,8 +22,8 @@ But of course, it's absolutely not limited to alarming dashboards. Be creative!
 * Don't disturb (not in taskbar nor in task-switcher)
 * Don't interfere UI (delegate all user interactions to underlying elements)
 * Screen selection for multi-monitor setup
-* Colorized text with Ansi Escape Sequences.  
-Supported are the well known color formats for 3-4bit, 8bit and 24bit (see [SGR](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters "Select_Graphic_Rendition")).
+* Colorized text, change font type or size with Ansi Escape Sequences.  
+Supported are the well known color formats for 3-4bit, 8bit and 24bit as well as the alternative font selection sequence (see [SGR](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters "Select_Graphic_Rendition")).
 
 ## Installation
 
@@ -52,33 +52,33 @@ $> make && ./bin/run_tests
 ```
 usage: overlay [OPTIONS] <INPUT_FILE>
 
-  -c, --config=FILE      file path to read configuration from
-  -h, --help             prints this help text
-  -v, --verbose          be verbose and print some debug output
-  -V, --version          print version number and quit
+  -c, --config=FILE       file path to read configuration from
+  -h, --help              prints this help text
+  -v, --verbose           be verbose and print some debug output
+  -V, --version           print version number and quit
 
 Positioning:
-  -e PIXEL               screen edge spacing in pixels; defaults to '0'
-  -l PIXEL               line spacing in pixels; defaults to '0'
-  -m INDEX               monitor to use; defaults to '0'
-  -o ORIENTATION         orientation to align window and lines; defaults to 'NW'
-                         possible values are N, NE, E, SE, S, SW, W, NW and CENTER
+  -e PIXEL                screen edge spacing in pixels; defaults to '0'
+  -l PIXEL                line spacing in pixels; defaults to '0'
+  -m INDEX                monitor to use; defaults to '0'
+  -o ORIENTATION          orientation to align window and lines; defaults to 'NW'
+                          possible values are N, NE, E, SE, S, SW, W, NW and CENTER
 
 Font:
-  -f, --font-name=FONT   font name; defaults to 'NotoSansMono'
-  -s, --font-size=SIZE   font size; defaults to '12'
+  -f, --font-name=FONT,.. font name; defaults to 'NotoSansMono'
+  -s, --font-size=SIZE,.. font size; defaults to '12'
 
 Colors:
-  -p, --profile=PROFILE  profile for ansi colors; values are VGA or XP
-      --fg-color=COLOR   foreground color; defaults to '[97m' (equals '[38;2;255;255;255m')
-      --fg-alpha=ALPHA   foreground alpha; defaults to '200'
-      --bg-color=COLOR   background color; defaults to '[40m' (equals '[48;2;0;0;0')
-      --bg-alpha=ALPHA   background alpha; defaults to '100'
+  -p, --profile=PROFILE   profile for ansi colors; values are VGA or XP
+      --fg-color=COLOR    foreground color; defaults to '[97m' (equals '[38;2;255;255;255m')
+      --fg-alpha=ALPHA    foreground alpha; defaults to '200'
+      --bg-color=COLOR    background color; defaults to '[40m' (equals '[48;2;0;0;0')
+      --bg-alpha=ALPHA    background alpha; defaults to '100'
 
 Behavior:
-  -d, --dim=PERCENT      dim the text on mouse over; defaults to '75'%
-  -D PERCENT             dim the text in general; defaults to '0'%
-  -t PIXEL               pixel tolerance for mouse over dimming; defaults to '0'
+  -d, --dim=PERCENT       dim the text on mouse over; defaults to '75'%
+  -D PERCENT              dim the text in general; defaults to '0'%
+  -t PIXEL                pixel tolerance for mouse over dimming; defaults to '0'
 ```
 
 ### Fonts
