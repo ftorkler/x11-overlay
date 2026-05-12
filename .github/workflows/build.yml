@@ -16,6 +16,9 @@ on:
       - 'src/**'
       - 'Makefile'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
