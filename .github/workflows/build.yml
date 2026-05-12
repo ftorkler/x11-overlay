@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: install dependencies
-        run: sudo apt-get install -y libx11-dev libxfixes-dev libxrandr-dev libxft-dev libfreetype-dev
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxfixes-dev libxrandr-dev libxft-dev libfreetype-dev
 
       - name: build
         run: make
